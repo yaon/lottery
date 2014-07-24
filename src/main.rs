@@ -6,13 +6,13 @@ enum BPTree<Key, Value>
   Node(
     uint,                                     // Branches
     [Key, ..ORDER],                           // Keys
-    [Option<BPTree<Key, Value>>, ..ORDER+1],  // Sons
-    Option<BPTree<Key, Value>>                // Father
+    [Box<Option<BPTree<Key, Value>>>, ..ORDER+1],  // Sons
+    Box<Option<BPTree<Key, Value>>>                // Father
   ),
   Leaf(
     Key,
     Value,
-    Option<BPTree<Key, Value>> // Father
+    Box<Option<BPTree<Key, Value>>> // Father
   ),
 }
 
@@ -21,25 +21,25 @@ fn print<Key, Value>(tree: BPTree<Key, Value>)
 }
 
 
-fn compare<Key>(a:Key, b:Key) -> int
+fn compare<Key>(a:&Key, b:&Key) -> int
 {
   return -1;
 }
 
-fn search<Key, Value>(tree: &BPTree<Key, Value>, key: Key) -> int
+fn search<Key, Value>(tree: BPTree<Key, Value>, key: Key) -> int
 {
   // loop {
     match tree {
       Node(b, k, s, _) => {
         for i in range(1u, b) {
-          if compare(k[1], key) < 0 {
+          if compare(&k[1], &key) < 0 {
           }
         }
-        0
+        0i
       },
-      Leaf(_, v, _) => 0
+      Leaf(_, v, _) => 0i
     };
-    return 0;
+    return 0i;
   // }
 }
 
@@ -53,5 +53,5 @@ fn delete<Key, Value>(tree: BPTree<Key, Value>, key: Key)
 
 fn main()
 {
-  0;
+  0i;
 }
