@@ -35,11 +35,11 @@ fn search<Key, Value>(tree: BPTree<Key, Value>, key: Key) -> int
           if compare(&k[i], &key) < 0 {
           }
         }
-        0
+        0i
       },
-      Leaf(_, v, _) => 0
+      Leaf(_, v, _) => 0i
     };
-    return 0;
+    return 0i;
   // }
 }
 
@@ -53,5 +53,5 @@ fn delete<Key, Value>(tree: BPTree<Key, Value>, key: Key)
 
 fn main()
 {
-  0;
+  0i;
 }
