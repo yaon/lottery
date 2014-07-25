@@ -1,6 +1,7 @@
 
 
 trait Function {
-    fn start(Sender<T>, Receiver<T>) -> ();
+    fn start(&self, Sender<T>, Receiver<T>) -> Function;
+    fn exit() -> ();
 }
 
