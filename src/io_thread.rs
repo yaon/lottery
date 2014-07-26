@@ -1,33 +1,35 @@
-mod IOThread{
-  use std::io::TcpListener;
-  use std::io::{Listener, Acceptor, TimeOut};
+use std::io::{Acceptor, TcpListener};
+use std::comm::Select;
+use block::Block;
 
-  struct IOThread {
-    acceptor: std::io::Acceptor,
-    select: std::comm::Select
+pub struct IOThread/*<T>*/ {
+  send: Sender<uint>,
+  recv: Receiver<uint>,
+  // acceptor: Box<Acceptor<T>>,
+  select: Select
+}
+
+impl IOThread {
+}
+
+impl Block for IOThread {
+  fn new(send: Sender<uint>, recv: Receiver<uint>) -> IOThread {
+    let listener = TcpListener::bind("0.0.0.0", 3737);
+    IOThread {
+      send: send,
+      recv: recv,
+      // acceptor: listener.listen(),
+      select: ::std::comm::Select::new()
+    }
   }
 
-  impl IOThread {
-
-    fn new(&self) -> IOThread {
-      let listener  = TcpListener::bind("0.0.0.0", "3737");
-      IOThread {
-        acceptor: listener.listen(),
-        select:   std::comm::Select::new()
-      }
-    }
-
+  fn start(&self) -> () {
+    println!("hello IOThread");
   }
 
-
-  impl Function for IOThread {
-    pub fn exit() -> () {
-      drop(acceptor);
-      drop(select);
-    }
-
-    pub fn start(send: Sender<T>, recv: Receiver<T>) -> () {
-      IOThread::new();
-    }
+  fn exit(&self) -> () {
+    // drop(self.acceptor);
+    // drop(self.select);
+    println!("bye IOThread");
   }
 }

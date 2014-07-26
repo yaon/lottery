@@ -1,57 +1,23 @@
-// Max number of keys per node
-static ORDER: uint = 4;
+use block::Block;
+use io_thread::IOThread;
+use pp_thread::TPP;
 
-enum BPTree<Key, Value>
-{
-  Node(
-    uint,                                     // Branches
-    [Key, ..ORDER],                           // Keys
-    [Box<Option<BPTree<Key, Value>>>, ..ORDER+1],  // Sons
-    Box<Option<BPTree<Key, Value>>>                // Father
-  ),
-  Leaf(
-    Key,
-    Value,
-    Box<Option<BPTree<Key, Value>>> // Father
-  ),
-}
-
-fn print<Key, Value>(tree: BPTree<Key, Value>)
-{
-}
+mod block;
+mod io_thread;
+mod pp_thread;
 
 
-fn compare<Key>(a:&Key, b:&Key) -> int
-{
-  return -1;
-}
+fn main() {
+  let (s1, r1): (Sender<uint>, Receiver<uint>) = channel();
+  let (s2, r2): (Sender<uint>, Receiver<uint>) = channel();
 
-fn search<Key, Value>(tree: BPTree<Key, Value>, key: Key) -> int
-{
-  // loop {
-    match tree {
-      Node(b, k, s, _) => {
-        for i in range(1u, b) {
-          if compare(&k[1], &key) < 0 {
-          }
-        }
-        0i
-      },
-      Leaf(_, v, _) => 0i
-    };
-    return 0i;
-  // }
-}
+  spawn(proc() {
+    let tio: IOThread = Block::new(s2, r1);
+    tio.start();
+  });
 
-fn insert<Key, Value>(tree: BPTree<Key, Value>, key: Key, value: Value)
-{
-}
-
-fn delete<Key, Value>(tree: BPTree<Key, Value>, key: Key)
-{
-}
-
-fn main()
-{
-  0i;
+  spawn(proc() {
+    let tpp: TPP = Block::new(s1, r2);
+    tpp.start();
+  });
 }
