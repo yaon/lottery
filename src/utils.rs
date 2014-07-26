@@ -3,3 +3,5 @@ pub trait Block {
   fn start(&self) -> ();
   fn exit(&self) -> ();
 }
+
+pub static SOCKET_PATH: &'static str = "socket-unix-test";

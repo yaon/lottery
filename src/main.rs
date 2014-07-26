@@ -1,8 +1,8 @@
-use block::Block;
+use utils::Block;
 use io_thread::IOThread;
 use pp_thread::TPP;
 
-mod block;
+mod utils;
 mod io_thread;
 mod pp_thread;
 
@@ -19,4 +19,9 @@ fn main() {
     let tpp: TPP = Block::new(s1, r2);
     tpp.start();
   });
+
+
+  loop {
+    std::io::timer::sleep(1000);
+  }
 }

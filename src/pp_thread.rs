@@ -1,4 +1,4 @@
-use block::Block;
+use utils::Block;
 
 pub struct TPP {
   send: Sender<uint>,
