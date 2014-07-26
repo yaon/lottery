@@ -6,7 +6,6 @@ mod block;
 mod io_thread;
 mod pp_thread;
 
-
 fn main() {
   let (s1, r1): (Sender<uint>, Receiver<uint>) = channel();
   let (s2, r2): (Sender<uint>, Receiver<uint>) = channel();
