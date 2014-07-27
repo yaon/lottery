@@ -1,5 +1,3 @@
-// use std::io::{Acceptor, TcpListener};
-// use std::comm::Select;
 
 use std::io::net::unix::UnixListener;
 use std::io::{fs,Acceptor,Listener};
@@ -59,3 +57,4 @@ impl Block for IOThread {
     println!("bye IOThread");
   }
 }
+
