@@ -1,5 +1,4 @@
 use std::sync::{Mutex, Arc};
-use std::comm;
 use utils::Command;
 
 pub struct Worker {
