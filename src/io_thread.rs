@@ -4,10 +4,11 @@ use std::io::{fs,Acceptor,Listener};
 
 use utils::SOCKET_PATH;
 use utils::Block;
+use utils::Command;
 
 pub struct IOThread/*<T>*/ {
-  send: Sender<String>,
-  recv: Receiver<String>,
+  send: Sender<Command>,
+  recv: Receiver<Command>,
   socket: Path,
   // acceptor: Box<Acceptor<T>>,
   // select: Select
@@ -22,7 +23,7 @@ impl IOThread {
 }
 
 impl Block for IOThread {
-  fn new(send: Sender<String>, recv: Receiver<String>) -> IOThread {
+  fn new(send: Sender<Command>, recv: Receiver<Command>) -> IOThread {
     // let listener = TcpListener::bind("0.0.0.0", 3737);
     IOThread {
       send: send,

@@ -1,15 +1,14 @@
-// #![feature(phase)]
-// #[phase(plugin, link)] extern crate log;
 use std::sync::{Mutex, Arc};
 use std::comm;
+use utils::Command;
 
 pub struct Worker {
-  tx: Sender<String>,
-  rx_mutex: Arc<Mutex<Receiver<String>>>,
+  tx: Sender<Command>,
+  rx_mutex: Arc<Mutex<Receiver<Command>>>,
 }
 
 impl Worker {
-  pub fn new(tx: Sender<String>, rx_mutex: Arc<Mutex<Receiver<String>>>) -> Worker {
+  pub fn new(tx: Sender<Command>, rx_mutex: Arc<Mutex<Receiver<Command>>>) -> Worker {
     Worker { tx: tx, rx_mutex: rx_mutex }
   }
   pub fn start(&self) {
