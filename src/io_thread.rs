@@ -6,8 +6,8 @@ use utils::SOCKET_PATH;
 use utils::Block;
 
 pub struct IOThread/*<T>*/ {
-  send: Sender<uint>,
-  recv: Receiver<uint>,
+  send: Sender<String>,
+  recv: Receiver<String>,
   socket: Path,
   // acceptor: Box<Acceptor<T>>,
   // select: Select
@@ -22,7 +22,7 @@ impl IOThread {
 }
 
 impl Block for IOThread {
-  fn new(send: Sender<uint>, recv: Receiver<uint>) -> IOThread {
+  fn new(send: Sender<String>, recv: Receiver<String>) -> IOThread {
     // let listener = TcpListener::bind("0.0.0.0", 3737);
     IOThread {
       send: send,

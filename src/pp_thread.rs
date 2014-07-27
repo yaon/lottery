@@ -1,23 +1,29 @@
-use utils::Block;
+// #![feature(phase)]
+// #[phase(plugin, link)] extern crate log;
+use std::sync::{Mutex, Arc};
+use std::comm;
 
-pub struct TPP {
-  send: Sender<uint>,
-  recv: Receiver<uint>
+pub struct Worker {
+  tx: Sender<String>,
+  rx_mutex: Arc<Mutex<Receiver<String>>>,
 }
 
-impl TPP {
-}
-
-impl Block for TPP {
-  fn new(send: Sender<uint>, recv: Receiver<uint>) -> TPP {
-    TPP { send: send, recv: recv }
+impl Worker {
+  pub fn new(tx: Sender<String>, rx_mutex: Arc<Mutex<Receiver<String>>>) -> Worker {
+    Worker { tx: tx, rx_mutex: rx_mutex }
   }
-
-  fn start(&self) -> () {
-    println!("hello TPP");
-  }
-
-  fn exit(&self) -> () {
-    println!("bye TPP");
+  pub fn start(&self) {
+    loop {
+      let mut msg;
+      {
+        let mut rx = self.rx_mutex.lock();
+        debug!("Worker: Got mutex");
+        msg = rx.recv();
+        debug!("Worker: Received {}", msg);
+      }
+      // std::io::timer::sleep(1000);
+      debug!("Worker: Sending {}", msg);
+      self.tx.send(msg);
+    }
   }
 }

@@ -1,57 +1,55 @@
 // Max number of keys per node
 static ORDER: uint = 4;
 
-enum BPTree<Key, Value>
+enum BPTree
 {
   Node(
-    uint,                                     // Branches
-    [Key, ..ORDER],                           // Keys
-    [Box<Option<BPTree<Key, Value>>>, ..ORDER+1],  // Sons
-    Box<Option<BPTree<Key, Value>>>                // Father
+    uint,                               // Branches
+    [int, ..ORDER],                     // ints
+    [Option<Box<BPTree>>, ..ORDER+1],   // Sons
+    Option<Box<BPTree>>                 // Father
   ),
   Leaf(
-    Key,
-    Value,
-    Box<Option<BPTree<Key, Value>>> // Father
+    u32,                // Hash
+    String,             // Key
+    String,             // Value
+    Option<Box<BPTree>> // Father
   ),
 }
 
-fn print<Key, Value>(tree: BPTree<Key, Value>)
+fn print(tree: BPTree)
 {
 }
 
-
-fn compare<Key>(a:&Key, b:&Key) -> int
+fn search(tree: BPTree, key: String) -> String
 {
-  return -1;
+  loop {
+    // match tree {
+    //   Node(b, k, s, _) => {
+    //     for i in range(1u, b) {
+    //       if &k[i] < &key {
+    //       }
+    //     }
+    //     0i
+    //   },
+    //   Leaf(_, v, _) => 0i
+    // };
+    // return 0i;
+    break
+  }
+  String::new()
 }
 
-fn search<Key, Value>(tree: BPTree<Key, Value>, key: Key) -> int
+fn insert(tree: BPTree, key: String, value: String) -> int
 {
-  // loop {
-    match tree {
-      Node(b, k, s, _) => {
-        for i in range(1u, b) {
-          if compare(&k[1], &key) < 0 {
-          }
-        }
-        0i
-      },
-      Leaf(_, v, _) => 0i
-    };
-    return 0i;
-  // }
+  0
 }
 
-fn insert<Key, Value>(tree: BPTree<Key, Value>, key: Key, value: Value)
+fn delete(tree: BPTree, key: String) -> int
 {
-}
-
-fn delete<Key, Value>(tree: BPTree<Key, Value>, key: Key)
-{
+  0
 }
 
 fn main()
 {
-  0i;
 }
