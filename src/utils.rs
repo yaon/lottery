@@ -29,3 +29,8 @@ pub trait Block {
 }
 
 pub static SOCKET_PATH: &'static str = "socket-unix-test";
+
+pub static NPROC : uint = 4u;
+
+// Max number of keys per node
+pub static ORDER: uint = 4;
