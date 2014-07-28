@@ -11,8 +11,19 @@ impl Command {
   pub fn get(a:String) -> Command { Get(a) }
 }
 
+#[deriving(Show)]
+pub enum Ack {
+  Error(uint),
+  Value(String),
+}
+
+impl Ack {
+  pub fn error(a: uint) -> Ack { Error(a) }
+  pub fn value(a: String) -> Ack { Value(a) }
+}
+
 pub trait Block {
-  fn new(send: Sender<Command>, recv: Receiver<Command>) -> Self;
+  fn new(send: Sender<Command>, recv: Receiver<Ack>) -> Self;
   fn start(&self) -> ();
   fn exit(&self) -> ();
 }

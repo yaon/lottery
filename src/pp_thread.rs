@@ -1,13 +1,13 @@
 use std::sync::{Mutex, Arc};
-use utils::Command;
+use utils::{ Ack, Command };
 
 pub struct Worker {
-  tx: Sender<Command>,
+  tx: Sender<Ack>,
   rx_mutex: Arc<Mutex<Receiver<Command>>>,
 }
 
 impl Worker {
-  pub fn new(tx: Sender<Command>, rx_mutex: Arc<Mutex<Receiver<Command>>>) -> Worker {
+  pub fn new(tx: Sender<Ack>, rx_mutex: Arc<Mutex<Receiver<Command>>>) -> Worker {
     Worker { tx: tx, rx_mutex: rx_mutex }
   }
   pub fn start(&self) {
@@ -20,8 +20,8 @@ impl Worker {
         debug!("Worker: Received {}", msg);
       }
       // std::io::timer::sleep(1000);
-      debug!("Worker: Sending {}", msg);
-      self.tx.send(msg);
+      debug!("Workermsg: Sending {}", msg);
+      self.tx.send(Ack::value(String::from_str("toto")));
     }
   }
 }

@@ -1,6 +1,6 @@
 #![feature(phase)]
 #[phase(plugin, link)] extern crate log;
-use utils::{Block, Command};
+use utils::{Block, Command, Ack};
 use io_thread::IOThread;
 use pp_thread::Worker;
 use std::sync::{Mutex, Arc};
@@ -12,7 +12,7 @@ mod pp_thread;
 static nprocs : uint = 4u;
 
 fn main() {
-  let (tpp_tx, tio_rx): (Sender<Command>, Receiver<Command>) = channel();
+  let (tpp_tx, tio_rx): (Sender<Ack>, Receiver<Ack>) = channel();
   let (tio_tx, tpp_rx): (Sender<Command>, Receiver<Command>) = channel();
 
   let tpp_rx_mutex = Arc::new(Mutex::new(tpp_rx));
