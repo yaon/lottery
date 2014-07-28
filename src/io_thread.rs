@@ -49,18 +49,18 @@ impl IOThread {
   }
 
 
-  fn add_vec(self, client : UnixStream) -> () {
+  fn add_vec(&mut self, client : UnixStream) -> () {
     let mut client = Client { client: client, id: self.vec_clients.len(),
                               nbr_request: 0, ack: 0 };
-    // self.vec_clients.push(client);
+    self.vec_clients.push(client);
   }
 
-  fn update_nbr_request(self, id: uint, nbr_request: int) -> () {
-    // self.vec_clients[id].nbr_request = nbr_request;
+  fn update_nbr_request(&mut self, id: uint, nbr_request: int) -> () {
+    self.vec_clients.get_mut(id).nbr_request = nbr_request;
   }
 
-  fn update_ack(self, id: uint, ack: int) -> () {
-    // self.vec_clients[id].ack = ack;
+  fn update_ack(&mut self, id: uint, ack: int) -> () {
+    self.vec_clients.get_mut(id).ack = ack;
   }
 }
 
