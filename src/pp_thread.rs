@@ -1,5 +1,6 @@
-use std::sync::{Mutex, Arc};
+use std::sync::{ Mutex, Arc };
 use utils::{ Ack, Command };
+use bptree::command;
 
 pub struct Worker {
   tx: Sender<Ack>,
@@ -12,16 +13,15 @@ impl Worker {
   }
   pub fn start(&self) {
     loop {
-      let mut msg;
+      let mut cmd;
       {
         let mut rx = self.rx_mutex.lock();
         debug!("Worker: Got mutex");
-        msg = rx.recv();
-        debug!("Worker: Received {}", msg);
+        cmd = rx.recv();
+        debug!("Worker: Received {}", cmd);
       }
-      // std::io::timer::sleep(1000);
-      debug!("Workermsg: Sending {}", msg);
-      self.tx.send(Ack::value(String::from_str("toto")));
+      // debug!("Workermsg: Sending {}", msg);
+      self.tx.send(command(cmd));
     }
   }
 }

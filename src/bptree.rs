@@ -1,8 +1,14 @@
-// Max number of keys per node
-static ORDER: uint = 4;
+use utils::{ Ack, Command, Add, Del, Get, ORDER };
 
-enum BPTree
-{
+pub fn command(cmd: Command) -> Ack {
+  return match cmd {
+    Add(k, v) => insert(k, v),
+    Del(k) => delete(k),
+    Get(k) => search(k),
+  }
+}
+
+enum BPTree {
   Node(
     uint,                               // Branches
     [int, ..ORDER],                     // ints
@@ -17,12 +23,10 @@ enum BPTree
   ),
 }
 
-fn print(tree: BPTree)
-{
+pub fn print(tree: BPTree) {
 }
 
-fn search(tree: BPTree, key: String) -> String
-{
+fn search(key: String) -> Ack {
   loop {
     // match tree {
     //   Node(b, k, s, _) => {
@@ -37,19 +41,13 @@ fn search(tree: BPTree, key: String) -> String
     // return 0i;
     break
   }
-  String::new()
+  return Ack::value(String::from_str("toto"));
 }
 
-fn insert(tree: BPTree, key: String, value: String) -> int
-{
-  0
+fn insert(key: String, value: String) -> Ack {
+  return Ack::value(String::from_str("toto"));
 }
 
-fn delete(tree: BPTree, key: String) -> int
-{
-  0
-}
-
-fn main()
-{
+fn delete(key: String) -> Ack {
+  return Ack::value(String::from_str("toto"));
 }
