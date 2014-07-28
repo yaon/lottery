@@ -1,21 +1,23 @@
-use std::str;
 use std::io::net::unix::UnixListener;
-use std::io::{fs, Acceptor, Listener, IoError, IoResult};
+use std::io::{fs, Acceptor, Listener, BufferedStream};
+use std::str::CharSplits;
 
 use utils::SOCKET_PATH;
 use utils::Block;
 use utils::Command;
+use utils::{Add, Del, Get};
 
-pub struct IOThread/*<T>*/ {
+pub struct IOThread {
   send: Sender<Command>,
   recv: Receiver<Command>,
   socket: Path,
 }
 
-fn unoption_str<'a>(s: Option<&'a str>) -> &'a str {
-  match s {
-    None => "",
-    Some(sth) => sth
+fn sanitize_str(it: CharSplits<char>) -> String {
+  let mut it = it;
+  match it.next() {
+    None => fail!("Protocol Error: Expected a word but got none."),
+    Some(sth) => String::from_str(sth.trim())
   }
 }
 
@@ -27,18 +29,18 @@ impl IOThread {
   }
 
   fn parse_cmd(&self, cmd : String) -> Option<Command> {
-    println!("{}", cmd);
+    static mut i:i32 = 0;
+    unsafe{ i += 1 };
     let mut sliced = cmd.as_slice().split(' ');
-    let arg1 = unoption_str(sliced.nth(1));
-    let arg2 = unoption_str(sliced.nth(2));
 
-    match sliced.nth(0) {
-      None => None,
-      Some("ADD") => Some(Command::add(String::from_str(arg1),
-                                       String::from_str(arg2))),
-      Some("DEL") => Some(Command::del(String::from_str(arg1))),
-      Some("GET") => Some(Command::get(String::from_str(arg1))),
-      _ => None
+    match sliced.next() {
+      None => {debug!("CMD {}: NONE", unsafe{i}); None},
+      Some("ADD") => {debug!("CMD {}: ADD", unsafe{i});
+                      Some(Add(sanitize_str(sliced),
+                               sanitize_str(sliced)))},
+      Some("DEL") => {debug!("CMD {}: DEL", unsafe{i}); Some(Del(sanitize_str(sliced)))},
+      Some("GET") => {debug!("CMD {}: GET", unsafe{i}); Some(Get(sanitize_str(sliced)))},
+      err => {debug!("CMD {}: OTHER={}", unsafe{i}, err); None}
     }
   }
 }
@@ -46,7 +48,6 @@ impl IOThread {
 
 impl Block for IOThread {
   fn new(send: Sender<Command>, recv: Receiver<Command>) -> IOThread {
-    // let listener = TcpListener::bind("0.0.0.0", 3737);
     IOThread {
       send: send,
       recv: recv,
@@ -64,13 +65,16 @@ impl Block for IOThread {
       Ok(stream) => {println!("Socket bound"); stream},
     };
 
-    for mut client in stream.listen().incoming() {
-      let cmd = self.parse_cmd(client.read_to_str().unwrap());
-      match cmd {
-        None => {println!("IOThread: command error. Ignoring")}
-        Some(cmd) => {
-          println!("IOThread: {}", cmd);
-          self.send.send(cmd);
+    for client in stream.listen().incoming() {
+      let mut stream = BufferedStream::new(client);
+      loop {
+        match stream.read_line() {
+          Err(e) => {debug!("IOThread: err: {}", e); break},
+          Ok(cmd) => match self.parse_cmd(cmd) {
+            None => {println!("IOThread: command error. Ignoring")}
+            Some(cmd) => {debug!("IOThread: parsed command = [{}]", cmd);
+                          self.send.send(cmd);}
+          }
         }
       }
     }

@@ -5,12 +5,6 @@ pub enum Command {
   Get(String)
 }
 
-impl Command {
-  pub fn add(a:String, b:String) -> Command { Add(a, b) }
-  pub fn del(a:String) -> Command { Del(a) }
-  pub fn get(a:String) -> Command { Get(a) }
-}
-
 pub trait Block {
   fn new(send: Sender<Command>, recv: Receiver<Command>) -> Self;
   fn start(&self) -> ();
