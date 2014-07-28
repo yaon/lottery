@@ -2,9 +2,11 @@ use std::str;
 use std::io::net::unix::UnixListener;
 use std::io::{fs, Acceptor, Listener, IoError, IoResult};
 
-use utils::{SOCKET_PATH, Block, Command};
+use utils::SOCKET_PATH;
+use utils::Block;
+use utils::Command;
 
-pub struct IOThread {
+pub struct IOThread/*<T>*/ {
   send: Sender<Command>,
   recv: Receiver<Command>,
   socket: Path,
