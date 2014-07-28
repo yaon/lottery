@@ -7,13 +7,8 @@ pub enum Command {
 
 #[deriving(Show)]
 pub enum Ack {
-  Error(uint),
-  Value(String),
-}
-
-impl Ack {
-  pub fn error(a: uint) -> Ack { Error(a) }
-  pub fn value(a: String) -> Ack { Value(a) }
+  Error(String),
+  Value(String, String),
 }
 
 pub trait Block {
