@@ -5,12 +5,6 @@ pub enum Command {
   Get(String)
 }
 
-impl Command {
-  pub fn add(a:String, b:String) -> Command { Add(a, b) }
-  pub fn del(a:String) -> Command { Del(a) }
-  pub fn get(a:String) -> Command { Get(a) }
-}
-
 #[deriving(Show)]
 pub enum Ack {
   Error(String),
