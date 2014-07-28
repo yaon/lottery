@@ -1,15 +1,15 @@
-use utils::Block;
+use utils::{Block, Command};
 
 pub struct TPP {
-  send: Sender<uint>,
-  recv: Receiver<uint>
+  send: Sender<Command>,
+  recv: Receiver<Command>
 }
 
 impl TPP {
 }
 
 impl Block for TPP {
-  fn new(send: Sender<uint>, recv: Receiver<uint>) -> TPP {
+  fn new(send: Sender<Command>, recv: Receiver<Command>) -> TPP {
     TPP { send: send, recv: recv }
   }
 

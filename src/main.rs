@@ -1,4 +1,4 @@
-use utils::Block;
+use utils::{Block, Command};
 use io_thread::IOThread;
 use pp_thread::TPP;
 
@@ -7,8 +7,8 @@ mod io_thread;
 mod pp_thread;
 
 fn main() {
-  let (s1, r1): (Sender<uint>, Receiver<uint>) = channel();
-  let (s2, r2): (Sender<uint>, Receiver<uint>) = channel();
+  let (s1, r1): (Sender<Command>, Receiver<Command>) = channel();
+  let (s2, r2): (Sender<Command>, Receiver<Command>) = channel();
 
   spawn(proc() {
     let tio: IOThread = Block::new(s2, r1);
