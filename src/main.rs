@@ -1,18 +1,17 @@
 #![feature(phase)]
 #[phase(plugin, link)] extern crate log;
-use utils::{Block, Command};
+use utils::{ Block, Command, Ack, NPROC };
 use io_thread::IOThread;
 use pp_thread::Worker;
-use std::sync::{Mutex, Arc};
+use std::sync::{ Mutex, Arc };
 
 mod utils;
 mod io_thread;
 mod pp_thread;
-
-static nprocs : uint = 4u;
+mod bptree;
 
 fn main() {
-  let (tpp_tx, tio_rx): (Sender<Command>, Receiver<Command>) = channel();
+  let (tpp_tx, tio_rx): (Sender<Ack>, Receiver<Ack>) = channel();
   let (tio_tx, tpp_rx): (Sender<Command>, Receiver<Command>) = channel();
 
   let tpp_rx_mutex = Arc::new(Mutex::new(tpp_rx));
@@ -23,7 +22,7 @@ fn main() {
     tio.start();
   });
 
-  for _ in range(0u, nprocs) {
+  for _ in range(0u, NPROC) {
     let tpp_rx_mutex_clone = tpp_rx_mutex.clone();
     let tpp_tx_clone = tpp_tx.clone();
 

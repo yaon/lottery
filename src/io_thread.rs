@@ -2,14 +2,11 @@ use std::io::net::unix::UnixListener;
 use std::io::{fs, Acceptor, Listener, BufferedStream};
 use std::str::CharSplits;
 
-use utils::SOCKET_PATH;
-use utils::Block;
-use utils::Command;
-use utils::{Add, Del, Get};
+use utils::{ SOCKET_PATH, Block, Command, Ack };
 
 pub struct IOThread {
   send: Sender<Command>,
-  recv: Receiver<Command>,
+  recv: Receiver<Ack>,
   socket: Path,
 }
 
@@ -47,7 +44,8 @@ impl IOThread {
 
 
 impl Block for IOThread {
-  fn new(send: Sender<Command>, recv: Receiver<Command>) -> IOThread {
+  fn new(send: Sender<Command>, recv: Receiver<Ack>) -> IOThread {
+    // let listener = TcpListener::bind("0.0.0.0", 3737);
     IOThread {
       send: send,
       recv: recv,
