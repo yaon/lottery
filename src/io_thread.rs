@@ -1,21 +1,23 @@
 use std::str;
-use std::io::net::unix::UnixListener;
+use std::io::net::unix::{UnixListener, UnixStream};
 use std::io::{fs, Acceptor, Listener, IoError, IoResult};
 
 use utils::{ SOCKET_PATH, Block, Command, Ack };
 
-pub struct IOThread/*<T>*/ {
+struct Client {
+  client: UnixStream,
+  id: uint,
+  nbr_request: int,
+  ack: int,
+}
+
+pub struct IOThread {
   send: Sender<Command>,
   recv: Receiver<Ack>,
   socket: Path,
+  vec_clients: Vec<Client>,
 }
 
-fn unoption_str<'a>(s: Option<&'a str>) -> &'a str {
-  match s {
-    None => "",
-    Some(sth) => sth
-  }
-}
 
 impl IOThread {
   fn unlink(&self) -> () {
@@ -24,14 +26,20 @@ impl IOThread {
     }
   }
 
+  fn unoption_str<'a>(&self, s: Option<&'a str>) -> &'a str {
+    match s {
+      None => "",
+      Some(sth) => sth
+    }
+  }
+
   fn parse_cmd(&self, cmd : String) -> Option<Command> {
     println!("{}", cmd);
     let mut sliced = cmd.as_slice().split(' ');
-    let arg1 = unoption_str(sliced.nth(1));
-    let arg2 = unoption_str(sliced.nth(2));
+    let arg1 = self.unoption_str(sliced.nth(1));
+    let arg2 = self.unoption_str(sliced.nth(2));
 
-    match sliced.nth(0) {
-      None => None,
+    match sliced.nth(0) { None => None,
       Some("ADD") => Some(Command::add(String::from_str(arg1),
                                        String::from_str(arg2))),
       Some("DEL") => Some(Command::del(String::from_str(arg1))),
@@ -39,22 +47,33 @@ impl IOThread {
       _ => None
     }
   }
+
+
+  fn add_vec(self, client : UnixStream) -> () {
+    let mut client = Client { client: client, id: self.vec_clients.len(),
+                              nbr_request: 0, ack: 0 };
+    // self.vec_clients.push(client);
+  }
+
+  fn update_nbr_request(self, id: uint, nbr_request: int) -> () {
+    // self.vec_clients[id].nbr_request = nbr_request;
+  }
+
+  fn update_ack(self, id: uint, ack: int) -> () {
+    // self.vec_clients[id].ack = ack;
+  }
 }
 
 
 impl Block for IOThread {
   fn new(send: Sender<Command>, recv: Receiver<Ack>) -> IOThread {
-    // let listener = TcpListener::bind("0.0.0.0", 3737);
-    IOThread {
-      send: send,
-      recv: recv,
-      socket: Path::new(SOCKET_PATH)
-    }
+    let mut iothread = IOThread { send: send, recv: recv,
+                                  socket: Path::new(SOCKET_PATH),
+                                  vec_clients: Vec::new() };
+    iothread
   }
 
   fn start(&self) -> () {
-    println!("hello IOThread");
-
     self.unlink();
 
     let stream = match UnixListener::bind(&self.socket) {
@@ -76,7 +95,6 @@ impl Block for IOThread {
 
   fn exit(&self) -> () {
     self.unlink();
-    println!("bye IOThread");
   }
 }
 
