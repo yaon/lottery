@@ -12,7 +12,7 @@ pub fn command(cmd: Command) -> Ack {
 }
 
 fn search(key: String) -> Ack {
-  let loto = BTree::new("k".to_string(), "v".to_string(), 2);
+  let mut loto = BTree::new("k".to_string(), "v".to_string(), 2);
   let get = loto.get(key.clone());
   return match get {
     Some(v) => { Value(key, v) },
@@ -21,7 +21,7 @@ fn search(key: String) -> Ack {
 }
 
 fn insert(key: String, value: String) -> Ack {
-  let loto = BTree::new("k".to_string(), "v".to_string(), 2);
+  let mut loto = BTree::new("k".to_string(), "v".to_string(), 2);
   loto = loto.insert(key.clone(), value.clone());
   return { Value(key, value) }
 }
