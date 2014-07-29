@@ -1,6 +1,6 @@
 #![feature(phase)]
 #[phase(plugin, link)] extern crate log;
-use utils::{ Block, Command, Ack, NPROC };
+use utils::{ Block, Command, Ack };
 use io_thread::IOThread;
 use pp_thread::Worker;
 use std::sync::{ Mutex, Arc };
@@ -9,6 +9,8 @@ mod utils;
 mod io_thread;
 mod pp_thread;
 mod bptree;
+
+static NPROC : uint = 4;
 
 fn main() {
   let (tpp_tx, tio_rx): (Sender<Ack>, Receiver<Ack>) = channel();
