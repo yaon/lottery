@@ -1,32 +1,42 @@
 use std::collections::btree::BTree;
 use utils::{ Ack, Command, Error, Value, Add, Del, Get, ORDER };
 
+pub struct Loto {
+  loto : Option<BTree<String, String>>,
+}
 
-
-pub fn command(cmd: Command) -> Ack {
-  return match cmd {
-    Add(k, v) => insert(k, v),
-    Del(k) => delete(k),
-    Get(k) => search(k),
+impl Loto {
+  pub fn new(tree: Option<BTree<String, String>>) -> Loto {
+    Loto { loto: tree }
   }
-}
 
-fn search(key: String) -> Ack {
-  let mut loto = BTree::new("k".to_string(), "v".to_string(), 2);
-  let get = loto.get(key.clone());
-  return match get {
-    Some(v) => { Value(key, v) },
-    None => { Error(key) }
+  pub fn command(&mut self, cmd: Command) -> Ack {
+    return match cmd {
+      Add(k, v) => self.add(k, v),
+      Del(k) => self.search(k),
+      Get(k) => self.search(k),
+    }
   }
-}
 
-fn insert(key: String, value: String) -> Ack {
-  let mut loto = BTree::new("k".to_string(), "v".to_string(), 2);
-  loto = loto.insert(key.clone(), value.clone());
-  return { Value(key, value) }
-}
+  fn search(&mut self, key: String) -> Ack {
+    return match self.loto {
+      Some(ref tree) => {
+        match tree.clone().get(key.clone()) {
+          Some(value) => { Value(key, value.clone()) },
+          None        => { Error(key) }
+        }
+      }
+      None => { Error(key) }
+    }
+  }
 
-fn delete(key: String) -> Ack {
-  // let loto = BTree::new("k".to_string(), "v".to_string(), 2);
-  return { Value(key.clone(), key.clone()) }
+  fn add(&mut self, key: String, value: String) -> Ack {
+    let new_tree =
+      match self.loto {
+        Some(ref tree) => Some(tree.clone().insert(key.clone(), value.clone())),
+        None           => Some(BTree::new(key.clone(), value.clone(), 2))
+      };
+    self.loto = new_tree;
+    { Value(key, value) }
+  }
 }
