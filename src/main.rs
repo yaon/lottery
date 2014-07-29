@@ -18,7 +18,7 @@ fn main() {
 
   debug!("Spawning IO thread");
   spawn(proc() {
-    let tio: IOThread = Block::new(tio_tx, tio_rx);
+    let mut tio: IOThread = Block::new(tio_tx, tio_rx);
     tio.start();
   });
 
@@ -34,6 +34,6 @@ fn main() {
   }
 
   loop {
-    std::io::timer::sleep(1000);
+    std::io::timer::sleep(10000);
   }
 }

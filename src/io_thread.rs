@@ -2,20 +2,20 @@ use std::io::net::unix::{UnixListener, UnixStream};
 use std::io::{fs, Acceptor, Listener, BufferedStream};
 use std::str::CharSplits;
 
-use utils::{ SOCKET_PATH, Block, Command, Ack, Add, Get, Del };
+use utils::{ SOCKET_PATH, Block, Command, Ack, Error, Value, Add, Get, Del };
 
-struct Client {
-  client: UnixStream,
+struct Ack_Client {
+  //client: UnixStream,
   id: uint,
   nbr_request: int,
-  ack: int,
+  vec_ack: Vec<Ack>,
 }
 
 pub struct IOThread {
   send: Sender<Command>,
   recv: Receiver<Ack>,
   socket: Path,
-  vec_clients: Vec<Client>,
+  vec_clients: Vec<Ack_Client>,
 }
 
 impl IOThread {
@@ -49,9 +49,9 @@ impl IOThread {
   }
 
 
-  fn add_vec(&mut self, client : UnixStream) -> () {
-    let mut client = Client { client: client, id: self.vec_clients.len(),
-                              nbr_request: 0, ack: 0 };
+  fn add_vec(&mut self/*, client : UnixStream*/) -> () {
+    let mut client = Ack_Client { /*client: client, */id: self.vec_clients.len(),
+                                  nbr_request: 0, vec_ack: Vec::new() };
     self.vec_clients.push(client);
   }
 
@@ -59,9 +59,24 @@ impl IOThread {
     self.vec_clients.get_mut(id).nbr_request = nbr_request;
   }
 
-  fn update_ack(&mut self, id: uint, ack: int) -> () {
-    self.vec_clients.get_mut(id).ack = ack;
+  fn update_ack(&mut self, id: uint, ack: Ack) -> () {
+    self.vec_clients.get_mut(id).vec_ack.push(ack)
   }
+
+  fn dump_vec(&self) -> () {
+    for i in range(0, self.vec_clients.len()) {
+      println!("vec[{}]", i);
+      println!("number of requests: {}", self.vec_clients.get(i).nbr_request);
+      for j in range(0, self.vec_clients.get(i).vec_ack.len()) {
+        let ack = self.vec_clients.get(i).vec_ack.get(j);
+        match ack {
+          Error(e) => println!("Error : {}", e),
+          Value(l,r) => println!("Success: {} {}", l, r),
+        }
+      }
+    }
+  }
+
 }
 
 
@@ -73,7 +88,7 @@ impl Block for IOThread {
     iothread
   }
 
-  fn start(&self) -> () {
+  fn start(&mut self) -> () {
     self.unlink();
 
     let stream = match UnixListener::bind(&self.socket) {
@@ -81,8 +96,11 @@ impl Block for IOThread {
       Ok(stream) => {println!("Socket bound"); stream},
     };
 
+
     for client in stream.listen().incoming() {
       let mut stream = BufferedStream::new(client);
+      &mut self.add_vec(/*client.unwrap()*/);
+      let mut nbr_request = 0;
       loop {
         match stream.read_line() {
           Err(e) => {debug!("IOThread: err: {}", e); break},
@@ -93,6 +111,14 @@ impl Block for IOThread {
           }
         }
       }
+      self.update_nbr_request(0, nbr_request);
+
+      for _ in range(0, nbr_request + 1) {
+        let ack = self.recv.recv();
+        self.update_ack(0, ack);
+      }
+
+      self.dump_vec();
     }
   }
 
