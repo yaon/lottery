@@ -1,7 +1,7 @@
 #![feature(phase)]
 #[phase(plugin, link)] extern crate log;
 use utils::{ Block, Command, Ack, NPROC };
-use io_thread::IOThread;
+use io_thread::IThread;
 use pp_thread::Worker;
 use std::sync::{ Mutex, Arc };
 
@@ -18,7 +18,7 @@ fn main() {
 
   debug!("Spawning IO thread");
   spawn(proc() {
-    let mut tio: IOThread = Block::new(tio_tx, tio_rx);
+    let mut tio: IThread = Block::new(tio_tx, tio_rx);
     tio.start();
   });
 
