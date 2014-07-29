@@ -64,19 +64,18 @@ impl IOThread {
   }
 
   fn dump_vec(&self) -> () {
-    for i in range(0, self.vec_clients.len()) {
+    for i in range(0, self.vec_clients.len() - 1) {
       println!("vec[{}]", i);
       println!("number of requests: {}", self.vec_clients.get(i).nbr_request);
       for j in range(0, self.vec_clients.get(i).vec_ack.len()) {
         let ack = self.vec_clients.get(i).vec_ack.get(j);
         match ack {
-          Error(e) => println!("Error : {}", e),
-          Value(l,r) => println!("Success: {} {}", l, r),
+          &Error(ref e) => println!("Error : {}", e),
+          &Value(ref l,ref r) => println!("Success: {} {}", l, r),
         }
       }
     }
   }
-
 }
 
 
@@ -107,13 +106,14 @@ impl Block for IOThread {
           Ok(cmd) => match self.parse_cmd(cmd) {
             None => {println!("IOThread: command error. Ignoring")}
             Some(cmd) => {debug!("IOThread: parsed command = [{}]", cmd);
+                          nbr_request += 1;
                           self.send.send(cmd);}
           }
         }
       }
       self.update_nbr_request(0, nbr_request);
 
-      for _ in range(0, nbr_request + 1) {
+      for _ in range(0, nbr_request) {
         let ack = self.recv.recv();
         self.update_ack(0, ack);
       }
