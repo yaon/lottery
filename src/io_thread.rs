@@ -68,10 +68,10 @@ impl IOThread {
       println!("vec[{}]", i);
       println!("number of requests: {}", self.vec_clients.get(i).nbr_request);
       for j in range(0, self.vec_clients.get(i).vec_ack.len()) {
-        match self.vec_clients.get(i).vec_ack.get(j) {
-          //& Error(e) => println!("Error : {}", e),
-          _ => println!("hello"),
-          //& Value(& l,& r) => println!("Success: {} {}", l, r),
+        let ack = self.vec_clients.get(i).vec_ack.get(j);
+        match ack {
+          Error(e) => println!("Error : {}", e),
+          Value(l,r) => println!("Success: {} {}", l, r),
         }
       }
     }
@@ -113,8 +113,7 @@ impl Block for IOThread {
       }
       self.update_nbr_request(0, nbr_request);
 
-      for _ in range(0, nbr_request) {
-        debug!("IOThread: pooling on recv");
+      for _ in range(0, nbr_request + 1) {
         let ack = self.recv.recv();
         self.update_ack(0, ack);
       }

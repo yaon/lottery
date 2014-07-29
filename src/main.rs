@@ -34,6 +34,6 @@ fn main() {
   }
 
   loop {
-    std::io::timer::sleep(1000);
+    std::io::timer::sleep(10000);
   }
 }
