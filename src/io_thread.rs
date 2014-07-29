@@ -60,8 +60,6 @@ impl IThread {
       }
     }
   }
-
-
 }
 
 impl Block for IThread {
@@ -94,18 +92,19 @@ impl Block for IThread {
           Ok(cmd) => match self.parse_cmd(cmd) {
             None => {println!("IOThread: command error. Ignoring")}
             Some(cmd) => {debug!("IOThread: parsed command = [{}]", cmd);
+                          //nbr_request += 1;
                           self.cmd_chan.send(cmd);}
           }
         }
       }
-//      self.update_nbr_request(0, nbr_request);
-//
-//      for _ in range(0, nbr_request + 1) {
-//        let ack = self.recv.recv();
-//        self.update_ack(0, ack);
-//      }
-//
-//      self.dump_vec();
+      //self.update_nbr_request(0, nbr_request);
+
+      //for _ in range(0, nbr_request) {
+      //  let ack = self.recv.recv();
+      //  self.update_ack(0, ack);
+      //}
+
+      //self.dump_vec();
     }
   }
 
