@@ -18,7 +18,7 @@ fn main() {
 
   debug!("Spawning IO thread");
   spawn(proc() {
-    let tio: IOThread = Block::new(tio_tx, tio_rx);
+    let mut tio: IOThread = Block::new(tio_tx, tio_rx);
     tio.start();
   });
 

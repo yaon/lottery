@@ -13,7 +13,7 @@ pub enum Ack {
 
 pub trait Block {
   fn new(send: Sender<Command>, recv: Receiver<Ack>) -> Self;
-  fn start(&self) -> ();
+  fn start(&mut self) -> ();
   fn exit(&self) -> ();
 }
 
