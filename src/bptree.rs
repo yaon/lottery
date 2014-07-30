@@ -18,7 +18,7 @@ impl Loto {
     }
   }
 
-  fn search(&mut self, key: String) -> Ack {
+  fn search(&self, key: String) -> Ack {
     return match self.loto {
       Some(ref tree) => {
         match tree.clone().get(key.clone()) {
