@@ -9,21 +9,22 @@ use utils::{SOCKET_PATH, Command, Ack, Add, Get, Error, Value};
 use utils::{TransactionMeta};
 
 struct Client {
-  client: UnixStream,
-  id: uint,
-  nbr_request: int,
+  client:       UnixStream,
+  id:           u32,
+  nbr_request:  int,
 }
 
 pub struct IThread {
-  cmd_chan: Sender<Command>,
-  client_chan: Sender<Client>,
-  socket: Path,
+  cmd_chan:     Sender<Command>,
+  client_chan:  Sender<Client>,
+  socket:       Path,
 }
 
 pub struct OThread {
-  client_chan: Receiver<Client>,
-  ack_chan: Receiver<Ack>,
-  clients: Vec<Client>
+  client_chan:  Receiver<Client>,
+  ack_chan:     Receiver<Ack>,
+  clients:      Vec<Client>,
+  acks:         Vec<Ack>,
 }
 
 impl IThread {
@@ -49,19 +50,19 @@ impl IThread {
     let meta = TransactionMeta::new(client_id, trans, get_time());
     match sliced.next() {
       None => {
-        debug!("CMD {}: NONE", unsafe{i});
+        debug!("CMD {}: NONE", trans);
         None
       },
       Some("add") => {
-        debug!("CMD {}: ADD", unsafe{i});
+        debug!("CMD {}: ADD", trans);
         Some(Add(meta, self.sanitize_str(sliced), self.sanitize_str(sliced)))
       },
       Some("get") => {
-        debug!("CMD {}: GET", unsafe{i});
+        debug!("CMD {}: GET", trans);
         Some(Get(meta, self.sanitize_str(sliced)))
       },
       err => {
-        debug!("CMD {}: OTHER={}", unsafe{i}, err);
+        debug!("CMD {}: OTHER={}", trans, err);
         None
       }
     }
@@ -90,27 +91,25 @@ impl IThread {
       static mut i :u32 = 0;
       unsafe { i += 1 };
       let client_id = unsafe{i};
-      let mut stream = BufferedStream::new(client);
+      let mut stream = BufferedStream::new(client.clone());
       let mut nbr_request = 0;
       loop {
         match stream.read_line() {
-          Err(e) => {debug!("IOThread: err: {}", e); break},
           Ok(cmd) => match self.parse_cmd(client_id, cmd) {
             None => {println!("IOThread: command error. Ignoring")}
             Some(cmd) => {debug!("IOThread: parsed command = [{}]", cmd);
                           nbr_request += 1;
                           self.cmd_chan.send(cmd);}
-          }
+          },
+          // le compilo dit que y'a que EndOfFile donc pas d'erreurs
+          Err(_) => break
         }
+        self.client_chan.send(Client {
+          client: client.clone().unwrap(),
+          id:     client_id,
+          nbr_request: nbr_request
+        });
       }
-      self.update_nbr_request(client_id, nbr_request);
-
-      //for _ in range(0, nbr_request) {
-      //  let ack = self.recv.recv();
-      //  self.update_ack(0, ack);
-      //}
-
-      //self.dump_vec();
     }
   }
 
