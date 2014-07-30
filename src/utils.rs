@@ -3,12 +3,45 @@ use self::time::{Timespec, get_time};
 
 #[deriving(Show)]
 pub struct TransactionMeta {
-  id_client:        u32,
-  id_transaction:   u32,
-  open_time:        Timespec,
-  close_time:       Option<Timespec>,
-  start_op_time:    Option<Timespec>,
-  end_op_time:      Option<Timespec>
+  pub id_client:        u32,
+  pub id_transaction:   u32,
+  pub open_time:        Timespec,
+  pub close_time:       Option<Timespec>,
+  pub start_op_time:    Option<Timespec>,
+  pub end_op_time:      Option<Timespec>
+}
+
+#[deriving(Show)]
+pub enum Command {
+  Add(TransactionMeta, String, String),
+  Get(TransactionMeta, String)
+}
+
+#[deriving(Show)]
+pub enum Ack {
+  Error(TransactionMeta, String),
+  Value(TransactionMeta, String, String)
+}
+
+impl Ack {
+  pub fn meta(&self) -> TransactionMeta {
+    match *self {
+      Error(meta, _) => meta,
+      Value(meta, _, _) => meta
+    }
+  }
+
+  pub fn update_start_op_time(&mut self) -> () {
+    self.meta().update_start_op_time()
+  }
+
+  pub fn update_end_op_time(&mut self) -> () {
+    self.meta().update_end_op_time()
+  }
+
+  pub fn update_close_time(&mut self) -> () {
+    self.meta().update_close_time()
+  }
 }
 
 impl TransactionMeta {
@@ -30,18 +63,6 @@ impl TransactionMeta {
   pub fn update_close_time(&mut self) -> () {
     self.close_time = Some(get_time());
   }
-}
-
-#[deriving(Show)]
-pub enum Command {
-  Add(TransactionMeta, String, String),
-  Get(TransactionMeta, String)
-}
-
-#[deriving(Show)]
-pub enum Ack {
-  Error(TransactionMeta, String),
-  Value(TransactionMeta, String, String)
 }
 
 pub static SOCKET_PATH: &'static str = "socket-unix-test";

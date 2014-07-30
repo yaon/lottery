@@ -104,11 +104,12 @@ impl IThread {
           // le compilo dit que y'a que EndOfFile donc pas d'erreurs
           Err(_) => break
         }
-        self.client_chan.send(Client {
+        let mut c = Client {
           client: client.clone().unwrap(),
           id:     client_id,
           nbr_request: nbr_request
-        });
+        };
+        self.client_chan.send(c);
       }
     }
   }
@@ -158,25 +159,38 @@ impl OThread {
   }
 
   pub fn add_client(&mut self, client : Client) {
-    
+    self.clients.push(client)
   }
 
   pub fn dispatch_ack(&mut self, ack : Ack) {
-  
+
+    let mut idx = 0;
+    let meta = ack.meta();
+    let mut _client = self.clients.iter().find({|e| e.id == meta.id_client});
+
+    match _client {
+      None => {debug!("OThread: Unknown client id: {}",meta.id_client)},
+      Some(client) => {
+        self.send_ack(ack, *client);
+        //client.nbr_request -= 1;
+
+        //if (client.nbr_request == 0) {
+        //  self.clients.swap_remove(idx);
+        //  drop(client);
+        //  let mut ack = ack;
+        //  ack.update_close_time();
+        //}
+
+        self.acks.push(ack);
+
+
+      }
+    }
+
   }
 
-  fn add_vec(&mut self/*, client : UnixStream*/) -> () {
-    //let mut client = Ack_Client { /*client: client, */id: self.vec_clients.len(),
-    //                              nbr_request: 0, vec_ack: Vec::new() };
-    //self.vec_clients.push(client);
-  }
+  fn send_ack(&mut self, ack: Ack, mut clt: Client) {
 
-  fn update_nbr_request(&mut self, id: uint, nbr_request: int) -> () {
-    self.clients.get_mut(id).nbr_request = nbr_request;
-  }
-
-  fn update_ack(&mut self, id: uint, ack: Ack) -> () {
-    //self.clients.get_mut(id).vec_ack.push(ack)
   }
 
   fn dump_vec(&self) -> () {
