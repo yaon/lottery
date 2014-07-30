@@ -1,13 +1,13 @@
 use std::collections::btree::BTree;
 use utils::{ Ack, Command, Error, Value, Add, Get, TransactionMeta };
 
-pub struct Loto {
+pub struct DB {
   loto : Option<BTree<String, String>>,
 }
 
-impl Loto {
-  pub fn new(tree: Option<BTree<String, String>>) -> Loto {
-    Loto { loto: tree }
+impl DB {
+  pub fn new(tree: Option<BTree<String, String>>) -> DB {
+    DB { loto: tree }
   }
 
 

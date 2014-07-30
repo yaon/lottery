@@ -2,14 +2,14 @@
 #[phase(plugin, link)] extern crate log;
 use utils::{ Command, Ack};
 use io_thread::{IThread, OThread, Client};
-use pp_thread::Worker;
+use worker::Worker;
 use std::sync::{ Mutex, Arc, RWLock };
-use bptree::Loto;
+use db::DB;
 
 mod utils;
 mod io_thread;
-mod pp_thread;
-mod bptree;
+mod worker;
+mod db;
 
 static NPROC : uint = 4;
 
@@ -32,7 +32,7 @@ fn main() {
     to.start();
   });
 
-  let db_lock = Arc::new(RWLock::new(Loto::new(None)));
+  let db_lock = Arc::new(RWLock::new(DB::new(None)));
 
   for i in range(0u, NPROC) {
     let db_lock_clone = db_lock.clone();

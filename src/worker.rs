@@ -1,12 +1,12 @@
 use std::sync::{ Mutex, Arc, RWLock };
 use utils::{ Ack, Command, Add, Get };
-use bptree::Loto;
+use db::DB;
 
 pub struct Worker {
   id: uint,
   tx: Sender<Ack>,
   rx_mutex: Arc<Mutex<Receiver<Command>>>,
-  db_lock: Arc<RWLock<Loto>>
+  db_lock: Arc<RWLock<DB>>
 }
 
 impl Worker {
@@ -14,7 +14,7 @@ impl Worker {
     id: uint,
     tx: Sender<Ack>,
     rx_mutex: Arc<Mutex<Receiver<Command>>>,
-    db_lock: Arc<RWLock<Loto>>
+    db_lock: Arc<RWLock<DB>>
   ) -> Worker {
     Worker { id: id, tx: tx, rx_mutex: rx_mutex, db_lock: db_lock }
   }
