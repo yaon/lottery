@@ -129,20 +129,39 @@ impl OThread {
     }
   }
 
-  pub fn start(&self) {
-    let client  = self.client_chan;
-    let ack     = self.ack_chan;
-    loop {select!(
-      c = client.recv()   => self.add_client(c),
-      a = ack.recv()      => self.dispatch_ack(a)
-    )}
+  pub fn start(&mut self) {
+    loop {
+      use std::comm::Select;
+      let mut is_client = false;
+
+      {
+        let ref client  = self.client_chan;
+        let ref ack     = self.ack_chan;
+        let s = Select::new();
+        let mut handle1 = s.handle(client);
+        let mut handle2 = s.handle(ack);
+        unsafe {
+          handle1.add();
+          handle2.add();
+        }
+        is_client = (s.wait() == handle1.id())
+      }
+
+      if (is_client) {
+        let cli = self.client_chan.recv();
+        self.add_client(cli)
+      } else {
+        let ack = self.ack_chan.recv();
+        self.dispatch_ack(ack)
+      }
+    }
   }
 
-  pub fn add_client(&self, client : Client) {
+  pub fn add_client(&mut self, client : Client) {
     
   }
 
-  pub fn dispatch_ack(&self, ack : Ack) {
+  pub fn dispatch_ack(&mut self, ack : Ack) {
   
   }
 
