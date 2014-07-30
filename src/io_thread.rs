@@ -8,7 +8,7 @@ use std::str::CharSplits;
 use utils::{SOCKET_PATH, Command, Ack, Add, Get, Error, Value};
 use utils::{TransactionMeta};
 
-struct Client {
+pub struct Client {
   client:       UnixStream,
   id:           u32,
   nbr_request:  int,
@@ -68,8 +68,7 @@ impl IThread {
     }
   }
 
-  pub fn new(send: Sender<Command>, recv: Receiver<Ack>) -> IThread {
-    let (client_send, _) : (Sender<Client>, Receiver<Client>) = channel(); // FIXME
+  pub fn new(send: Sender<Command>, client_send: Sender<Client>) -> IThread {
     let mut ithread = IThread {
       cmd_chan: send,
       client_chan: client_send,
@@ -158,11 +157,9 @@ impl OThread {
   }
 
   pub fn add_client(&mut self, client : Client) {
-    
   }
 
   pub fn dispatch_ack(&mut self, ack : Ack) {
-  
   }
 
   fn add_vec(&mut self/*, client : UnixStream*/) -> () {

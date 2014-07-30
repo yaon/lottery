@@ -1,7 +1,7 @@
 #![feature(phase)]
 #[phase(plugin, link)] extern crate log;
 use utils::{ Command, Ack};
-use io_thread::IThread;
+use io_thread::{IThread, OThread, Client};
 use pp_thread::Worker;
 use std::sync::{ Mutex, Arc };
 
@@ -15,13 +15,19 @@ static NPROC : uint = 4;
 fn main() {
   let (tpp_tx, tio_rx): (Sender<Ack>, Receiver<Ack>) = channel();
   let (tio_tx, tpp_rx): (Sender<Command>, Receiver<Command>) = channel();
+  let (client_send, client_recv): (Sender<Client>, Receiver<Client>) = channel();
 
   let tpp_rx_mutex = Arc::new(Mutex::new(tpp_rx));
 
   debug!("Spawning IO thread");
   spawn(proc() {
-    let mut tio: IThread = IThread::new(tio_tx, tio_rx);
-    tio.start();
+    let mut ti: IThread = IThread::new(tio_tx, client_send);
+    ti.start();
+  });
+
+  spawn(proc() {
+    let mut to: OThread = OThread::new(client_recv, tio_rx);
+    to.start();
   });
 
   for _ in range(0u, NPROC) {
