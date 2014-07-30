@@ -3,8 +3,8 @@ use self::time::{Timespec, get_time};
 
 #[deriving(Show)]
 pub struct TransactionMeta {
-  id_client:        u32,
-  id_transaction:   u32,
+  id_client:        uint,
+  id_transaction:   uint,
   open_time:        Timespec,
   close_time:       Option<Timespec>,
   start_op_time:    Option<Timespec>,
@@ -12,7 +12,7 @@ pub struct TransactionMeta {
 }
 
 impl TransactionMeta {
-  pub fn new(client: u32, trans:u32, open: Timespec) -> TransactionMeta {
+  pub fn new(client: uint, trans: uint, open: Timespec) -> TransactionMeta {
     TransactionMeta {
       id_client: client, id_transaction: trans,
       open_time: open, close_time: None,
