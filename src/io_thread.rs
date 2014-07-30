@@ -98,12 +98,12 @@ impl IThread {
           Ok(cmd) => match self.parse_cmd(client_id, cmd) {
             None => {println!("IOThread: command error. Ignoring")}
             Some(cmd) => {debug!("IOThread: parsed command = [{}]", cmd);
-                          //nbr_request += 1;
+                          nbr_request += 1;
                           self.cmd_chan.send(cmd);}
           }
         }
       }
-      //self.update_nbr_request(0, nbr_request);
+      self.update_nbr_request(client_id, nbr_request);
 
       //for _ in range(0, nbr_request) {
       //  let ack = self.recv.recv();
