@@ -28,13 +28,13 @@ impl Worker {
         cmd
       };
       let ack = match cmd {
-        Add(k, v, m) => {
+        Add(m, k, v) => {
           let mut db = self.db_lock.write();
-          db.command({ Add(k, v, m) })
+          db.add(m, k, v)
         },
-        Get(k, m) => {
-          let mut db = self.db_lock.write(); // Read here
-          db.command({ Get(k, m) })
+        Get(m, k) => {
+          let mut db = self.db_lock.read();
+          db.search(m, k)
         }
       };
 
