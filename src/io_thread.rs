@@ -121,6 +121,32 @@ impl IThread {
 
 impl OThread {
 
+  pub fn new(client:Receiver<Client>, ack:Receiver<Ack>) -> OThread {
+    OThread {
+      client_chan:  client,
+      ack_chan:     ack,
+      clients:      Vec::new(),
+      acks:         Vec::new(),
+    }
+  }
+
+  pub fn start(&self) {
+    let client  = self.client_chan;
+    let ack     = self.ack_chan;
+    loop {select!(
+      c = client.recv()   => self.add_client(c),
+      a = ack.recv()      => self.dispatch_ack(a)
+    )}
+  }
+
+  pub fn add_client(&self, client : Client) {
+    
+  }
+
+  pub fn dispatch_ack(&self, ack : Ack) {
+  
+  }
+
   fn add_vec(&mut self/*, client : UnixStream*/) -> () {
     //let mut client = Ack_Client { /*client: client, */id: self.vec_clients.len(),
     //                              nbr_request: 0, vec_ack: Vec::new() };
