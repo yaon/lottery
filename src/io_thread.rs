@@ -102,14 +102,13 @@ impl IThread {
                           self.cmd_chan.send(cmd);}
           },
           // le compilo dit que y'a que EndOfFile donc pas d'erreurs
-          Err(_) => {
-            self.client_chan.send(Client {
-              client: client.clone().unwrap(),
-              id:     client_id,
-              nbr_request: nbr_request
-            })
-          }
+          Err(_) => break
         }
+        self.client_chan.send(Client {
+          client: client.clone().unwrap(),
+          id:     client_id,
+          nbr_request: nbr_request
+        });
       }
     }
   }

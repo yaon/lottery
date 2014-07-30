@@ -1,5 +1,5 @@
 extern crate time;
-use self::time::{Timespec};
+use self::time::{Timespec, get_time};
 
 #[deriving(Show)]
 pub struct TransactionMeta {
@@ -18,6 +18,17 @@ impl TransactionMeta {
       open_time: open, close_time: None,
       start_op_time: None, end_op_time: None
     }
+  }
+  pub fn update_start_op_time(&mut self) -> () {
+    self.start_op_time = Some(get_time());
+  }
+
+  pub fn update_end_op_time(&mut self) -> () {
+    self.end_op_time = Some(get_time());
+  }
+
+  pub fn update_close_time(&mut self) -> () {
+    self.close_time = Some(get_time());
   }
 }
 
