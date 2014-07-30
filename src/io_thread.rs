@@ -10,7 +10,7 @@ use utils::{TransactionMeta};
 
 pub struct Client {
   client:       UnixStream,
-  id:           u32,
+  id:           uint,
   nbr_request:  int,
 }
 
@@ -42,8 +42,8 @@ impl IThread {
     }
   }
 
-  fn parse_cmd(&self, client_id: u32, cmd : String) -> Option<Command> {
-    static mut i:u32 = 0;
+  fn parse_cmd(&self, client_id: uint, cmd : String) -> Option<Command> {
+    static mut i:uint = 0;
     unsafe{ i += 1 };
     let mut sliced = cmd.as_slice().split(' ');
     let trans = unsafe{i};
@@ -87,7 +87,7 @@ impl IThread {
 
 
     for client in stream.listen().incoming() {
-      static mut i :u32 = 0;
+      static mut i :uint = 0;
       unsafe { i += 1 };
       let client_id = unsafe{i};
       let mut stream = BufferedStream::new(client.clone());
@@ -157,8 +157,8 @@ impl OThread {
   }
 
   pub fn add_client(&mut self, client : Client) {
-    for i in range(0, self.clients.len) {
-      if self.clients.get(i).id = i {
+    for i in range(0u, self.clients.len()) {
+      if self.clients.get(i).id == i {
         println!("OThread: found same client id({}) in clients vec", i);
         break;
       }
@@ -168,5 +168,31 @@ impl OThread {
 
   pub fn dispatch_ack(&mut self, ack : Ack) {
   }
+
+  pub fn send_ack(&mut self, ack: Ack, mut clt: Client) {
+    match ack {
+      Error(m, s) => {
+        clt.client.write_str((format!("Error: {}\n{}",
+                                      s, self.dump_meta(m))).as_slice())
+      }
+      Value(m, k, v) => {
+        clt.client.write_str((format!("Success: {} => {}\n{}",
+                                      k, v, self.dump_meta(m)).as_slice()))
+      }
+    };
+  }
+
+  fn dump_meta(&mut self, meta: TransactionMeta) {
+    println!("hello")
+    // (format!("id_client : {}\n
+    //         id_transaction: {}\n
+    //         open_time: {}\n
+    //         close_time: {}\n
+    //         start_query_time: {}\n
+    //         end_query_time: {}",
+    //         meta.id_client, meta.id_transaction, meta.open_time,
+    //         meta.close_time, meta.start_op_time, meta.end_op_time)).as_slice()
+  }
+
 }
 
