@@ -182,17 +182,16 @@ impl OThread {
     };
   }
 
-  fn dump_meta(&mut self, meta: TransactionMeta) {
-    println!("hello")
-    // (format!("id_client : {}\n
-    //         id_transaction: {}\n
-    //         open_time: {}\n
-    //         close_time: {}\n
-    //         start_query_time: {}\n
-    //         end_query_time: {}",
-    //         meta.id_client, meta.id_transaction, meta.open_time,
-    //         meta.close_time, meta.start_op_time, meta.end_op_time)).as_slice()
+  fn dump_meta(&self, meta: TransactionMeta) -> String {
+    return (format!("id_client : {}\n
+            id_transaction: {}\n
+            open_time: {}\n
+            close_time: {}\n
+            start_query_time: {}\n
+            end_query_time: {}",
+            meta.id_client, meta.id_transaction,
+            meta.open_time, meta.close_time,
+            meta.start_op_time, meta.end_op_time)).as_slice().to_string()
   }
-
 }
 
