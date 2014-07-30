@@ -1,7 +1,7 @@
-ADD caillard jim
-ADD mariaux thomas
-ADD wickham thomas
-GET caillard
-GET mariaux
-GET wickham
+add caillard jim
+add mariaux thomas
+add wickham thomas
+get caillard
+get mariaux
+get wickham
 

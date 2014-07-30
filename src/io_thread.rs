@@ -95,8 +95,8 @@ impl IThread {
       loop {
         match stream.read_line() {
           Ok(cmd) => match self.parse_cmd(client_id, cmd) {
-            None => {println!("IOThread: command error. Ignoring")}
-            Some(cmd) => {debug!("IOThread: parsed command = [{}]", cmd);
+            None => {println!("IThread: command error. Ignoring")}
+            Some(cmd) => {debug!("IThread: parsed command = [{}]", cmd);
                           nbr_request += 1;
                           self.cmd_chan.send(cmd);}
           },
@@ -146,7 +146,7 @@ impl OThread {
         is_client = (s.wait() == handle1.id())
       }
 
-      if (is_client) {
+      if is_client {
         let cli = self.client_chan.recv();
         self.add_client(cli)
       } else {
@@ -157,37 +157,16 @@ impl OThread {
   }
 
   pub fn add_client(&mut self, client : Client) {
+    for i in range(0, self.clients.len) {
+      if self.clients.get(i).id = i {
+        println!("OThread: found same client id({}) in clients vec", i);
+        break;
+      }
+    }
+    self.clients.push(client);
   }
 
   pub fn dispatch_ack(&mut self, ack : Ack) {
-  }
-
-  fn add_vec(&mut self/*, client : UnixStream*/) -> () {
-    //let mut client = Ack_Client { /*client: client, */id: self.vec_clients.len(),
-    //                              nbr_request: 0, vec_ack: Vec::new() };
-    //self.vec_clients.push(client);
-  }
-
-  fn update_nbr_request(&mut self, id: uint, nbr_request: int) -> () {
-    self.clients.get_mut(id).nbr_request = nbr_request;
-  }
-
-  fn update_ack(&mut self, id: uint, ack: Ack) -> () {
-    //self.clients.get_mut(id).vec_ack.push(ack)
-  }
-
-  fn dump_vec(&self) -> () {
-    for i in range(0, self.clients.len()) {
-      println!("vec[{}]", i);
-      println!("number of requests: {}", self.clients.get(i).nbr_request);
-      //for j in range(0, self.vec_clients.get(i).vec_ack.len()) {
-      //  let ack = self.vec_clients.get(i).vec_ack.get(j);
-      //  match ack {
-      //    Error(e) => println!("Error : {}", e),
-      //    Value(l,r) => println!("Success: {} {}", l, r),
-      //  }
-      //}
-    }
   }
 }
 
