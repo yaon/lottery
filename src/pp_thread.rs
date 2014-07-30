@@ -1,5 +1,5 @@
 use std::sync::{ Mutex, Arc, RWLock };
-use utils::{ Ack, Command, Add, Get, Del };
+use utils::{ Ack, Command, Add, Get };
 use bptree::Loto;
 
 pub struct Worker {
@@ -28,17 +28,13 @@ impl Worker {
         cmd
       };
       let ack = match cmd {
-        Add(k, v) => {
+        Add(k, v, m) => {
           let mut db = self.db_lock.write();
-          db.command({ Add(k, v) })
+          db.command({ Add(k, v, m) })
         },
-        Get(k) => {
+        Get(k, m) => {
           let mut db = self.db_lock.write(); // Read here
-          db.command({ Get(k) })
-        }
-        Del(k) => {
-          let mut db = self.db_lock.write(); // Read here
-          db.command({ Del(k) })
+          db.command({ Get(k, m) })
         }
       };
 
