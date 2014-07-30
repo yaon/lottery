@@ -1,8 +1,12 @@
+extern crate time;
+use self::time::get_time;
+
 use std::io::net::unix::{UnixListener, UnixStream};
 use std::io::{fs, Acceptor, Listener, BufferedStream};
 use std::str::CharSplits;
 
-use utils::{SOCKET_PATH, Block, Command, Ack, Add, Get, Del, Error, Value};
+use utils::{SOCKET_PATH, Command, Ack, Add, Get, Error, Value};
+use utils::{TransactionMeta};
 
 struct Client {
   client: UnixStream,
@@ -37,10 +41,12 @@ impl IThread {
     }
   }
 
-  fn parse_cmd(&self, cmd : String) -> Option<Command> {
-    static mut i:i32 = 0;
+  fn parse_cmd(&self, client_id: u32, cmd : String) -> Option<Command> {
+    static mut i:u32 = 0;
     unsafe{ i += 1 };
     let mut sliced = cmd.as_slice().split(' ');
+    let trans = unsafe{i};
+    let meta = TransactionMeta::new(client_id, trans, get_time());
     match sliced.next() {
       None => {
         debug!("CMD {}: NONE", unsafe{i});
@@ -48,11 +54,11 @@ impl IThread {
       },
       Some("add") => {
         debug!("CMD {}: ADD", unsafe{i});
-        Some(Add(self.sanitize_str(sliced), self.sanitize_str(sliced)))
+        Some(Add(meta, self.sanitize_str(sliced), self.sanitize_str(sliced)))
       },
       Some("get") => {
         debug!("CMD {}: GET", unsafe{i});
-        Some(Get(self.sanitize_str(sliced)))
+        Some(Get(meta, self.sanitize_str(sliced)))
       },
       err => {
         debug!("CMD {}: OTHER={}", unsafe{i}, err);
@@ -60,10 +66,8 @@ impl IThread {
       }
     }
   }
-}
 
-impl Block for IThread {
-  fn new(send: Sender<Command>, recv: Receiver<Ack>) -> IThread {
+  pub fn new(send: Sender<Command>, recv: Receiver<Ack>) -> IThread {
     let (client_send, _) : (Sender<Client>, Receiver<Client>) = channel(); // FIXME
     let mut ithread = IThread {
       cmd_chan: send,
@@ -73,7 +77,7 @@ impl Block for IThread {
     ithread
   }
 
-  fn start(&mut self) -> () {
+  pub fn start(&mut self) -> () {
     self.unlink();
 
     let stream = match UnixListener::bind(&self.socket) {
@@ -83,13 +87,15 @@ impl Block for IThread {
 
 
     for client in stream.listen().incoming() {
+      static mut i :u32 = 0;
+      unsafe { i += 1 };
+      let client_id = unsafe{i};
       let mut stream = BufferedStream::new(client);
-      //&mut self.add_vec(/*client.unwrap()*/);
       let mut nbr_request = 0;
       loop {
         match stream.read_line() {
           Err(e) => {debug!("IOThread: err: {}", e); break},
-          Ok(cmd) => match self.parse_cmd(cmd) {
+          Ok(cmd) => match self.parse_cmd(client_id, cmd) {
             None => {println!("IOThread: command error. Ignoring")}
             Some(cmd) => {debug!("IOThread: parsed command = [{}]", cmd);
                           //nbr_request += 1;
