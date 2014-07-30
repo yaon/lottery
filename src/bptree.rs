@@ -17,7 +17,7 @@ impl Loto {
     }
   }
 
-  fn search(&mut self, mut meta: TransactionMeta, key: String) -> Ack {
+  fn search(&self, mut meta: TransactionMeta, key: String) -> Ack {
     meta.update_start_op_time();
     return match self.loto {
       Some(ref tree) => {
