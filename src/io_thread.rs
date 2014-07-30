@@ -1,24 +1,33 @@
+extern crate time;
+use self::time::get_time;
+
 use std::io::net::unix::{UnixListener, UnixStream};
 use std::io::{fs, Acceptor, Listener, BufferedStream};
 use std::str::CharSplits;
 
-use utils::{ SOCKET_PATH, Block, Command, Ack, Error, Value, Add, Get, Del };
+use utils::{SOCKET_PATH, Command, Ack, Add, Get, Error, Value};
+use utils::{TransactionMeta};
 
-struct Ack_Client {
-  //client: UnixStream,
-  id: uint,
-  nbr_request: int,
-  vec_ack: Vec<Ack>,
+pub struct Client {
+  client:       UnixStream,
+  id:           u32,
+  nbr_request:  int,
 }
 
-pub struct IOThread {
-  send: Sender<Command>,
-  recv: Receiver<Ack>,
-  socket: Path,
-  vec_clients: Vec<Ack_Client>,
+pub struct IThread {
+  cmd_chan:     Sender<Command>,
+  client_chan:  Sender<Client>,
+  socket:       Path,
 }
 
-impl IOThread {
+pub struct OThread {
+  client_chan:  Receiver<Client>,
+  ack_chan:     Receiver<Ack>,
+  clients:      Vec<Client>,
+  acks:         Vec<Ack>,
+}
+
+impl IThread {
   fn unlink(&self) -> () {
     if self.socket.exists() {
       fs::unlink(&self.socket).unwrap();
@@ -33,61 +42,42 @@ impl IOThread {
     }
   }
 
-  fn parse_cmd(&self, cmd : String) -> Option<Command> {
-    static mut i:i32 = 0;
+  fn parse_cmd(&self, client_id: u32, cmd : String) -> Option<Command> {
+    static mut i:u32 = 0;
     unsafe{ i += 1 };
     let mut sliced = cmd.as_slice().split(' ');
+    let trans = unsafe{i};
+    let meta = TransactionMeta::new(client_id, trans, get_time());
     match sliced.next() {
-      None => {debug!("CMD {}: NONE", unsafe{i}); None},
-      Some("ADD") => {debug!("CMD {}: ADD", unsafe{i});
-                      Some(Add(self.sanitize_str(sliced),
-                               self.sanitize_str(sliced)))},
-      Some("DEL") => {debug!("CMD {}: DEL", unsafe{i}); Some(Del(self.sanitize_str(sliced)))},
-      Some("GET") => {debug!("CMD {}: GET", unsafe{i}); Some(Get(self.sanitize_str(sliced)))},
-      err => {debug!("CMD {}: OTHER={}", unsafe{i}, err); None}
-    }
-  }
-
-
-  fn add_vec(&mut self/*, client : UnixStream*/) -> () {
-    let mut client = Ack_Client { /*client: client, */id: self.vec_clients.len(),
-                                  nbr_request: 0, vec_ack: Vec::new() };
-    self.vec_clients.push(client);
-  }
-
-  fn update_nbr_request(&mut self, id: uint, nbr_request: int) -> () {
-    self.vec_clients.get_mut(id).nbr_request = nbr_request;
-  }
-
-  fn update_ack(&mut self, id: uint, ack: Ack) -> () {
-    self.vec_clients.get_mut(id).vec_ack.push(ack)
-  }
-
-  fn dump_vec(&self) -> () {
-    for i in range(0, self.vec_clients.len() - 1) {
-      println!("vec[{}]", i);
-      println!("number of requests: {}", self.vec_clients.get(i).nbr_request);
-      for j in range(0, self.vec_clients.get(i).vec_ack.len()) {
-        let ack = self.vec_clients.get(i).vec_ack.get(j);
-        match ack {
-          &Error(ref e) => println!("Error : {}", e),
-          &Value(ref l,ref r) => println!("Success: {} {}", l, r),
-        }
+      None => {
+        debug!("CMD {}: NONE", trans);
+        None
+      },
+      Some("add") => {
+        debug!("CMD {}: ADD", trans);
+        Some(Add(meta, self.sanitize_str(sliced), self.sanitize_str(sliced)))
+      },
+      Some("get") => {
+        debug!("CMD {}: GET", trans);
+        Some(Get(meta, self.sanitize_str(sliced)))
+      },
+      err => {
+        debug!("CMD {}: OTHER={}", trans, err);
+        None
       }
     }
   }
-}
 
-
-impl Block for IOThread {
-  fn new(send: Sender<Command>, recv: Receiver<Ack>) -> IOThread {
-    let mut iothread = IOThread { send: send, recv: recv,
-                                  socket: Path::new(SOCKET_PATH),
-                                  vec_clients: Vec::new() };
-    iothread
+  pub fn new(send: Sender<Command>, client_send: Sender<Client>) -> IThread {
+    let mut ithread = IThread {
+      cmd_chan: send,
+      client_chan: client_send,
+      socket: Path::new(SOCKET_PATH),
+    };
+    ithread
   }
 
-  fn start(&mut self) -> () {
+  pub fn start(&mut self) -> () {
     self.unlink();
 
     let stream = match UnixListener::bind(&self.socket) {
@@ -97,33 +87,86 @@ impl Block for IOThread {
 
 
     for client in stream.listen().incoming() {
-      let mut stream = BufferedStream::new(client);
-      &mut self.add_vec(/*client.unwrap()*/);
+      static mut i :u32 = 0;
+      unsafe { i += 1 };
+      let client_id = unsafe{i};
+      let mut stream = BufferedStream::new(client.clone());
       let mut nbr_request = 0;
       loop {
         match stream.read_line() {
-          Err(e) => {debug!("IOThread: err: {}", e); break},
-          Ok(cmd) => match self.parse_cmd(cmd) {
-            None => {println!("IOThread: command error. Ignoring")}
-            Some(cmd) => {debug!("IOThread: parsed command = [{}]", cmd);
+          Ok(cmd) => match self.parse_cmd(client_id, cmd) {
+            None => {println!("IThread: command error. Ignoring")}
+            Some(cmd) => {debug!("IThread: parsed command = [{}]", cmd);
                           nbr_request += 1;
-                          self.send.send(cmd);}
-          }
+                          self.cmd_chan.send(cmd);}
+          },
+          // le compilo dit que y'a que EndOfFile donc pas d'erreurs
+          Err(_) => break
         }
+        self.client_chan.send(Client {
+          client: client.clone().unwrap(),
+          id:     client_id,
+          nbr_request: nbr_request
+        });
       }
-      self.update_nbr_request(0, nbr_request);
-
-      for _ in range(0, nbr_request) {
-        let ack = self.recv.recv();
-        self.update_ack(0, ack);
-      }
-
-      self.dump_vec();
     }
   }
 
   fn exit(&self) -> () {
     self.unlink();
+  }
+}
+
+impl OThread {
+
+  pub fn new(client:Receiver<Client>, ack:Receiver<Ack>) -> OThread {
+    OThread {
+      client_chan:  client,
+      ack_chan:     ack,
+      clients:      Vec::new(),
+      acks:         Vec::new(),
+    }
+  }
+
+  pub fn start(&mut self) {
+    loop {
+      use std::comm::Select;
+      let mut is_client = false;
+
+      {
+        let ref client  = self.client_chan;
+        let ref ack     = self.ack_chan;
+        let s = Select::new();
+        let mut handle1 = s.handle(client);
+        let mut handle2 = s.handle(ack);
+        unsafe {
+          handle1.add();
+          handle2.add();
+        }
+        is_client = (s.wait() == handle1.id())
+      }
+
+      if is_client {
+        let cli = self.client_chan.recv();
+        self.add_client(cli)
+      } else {
+        let ack = self.ack_chan.recv();
+        self.dispatch_ack(ack)
+      }
+    }
+  }
+
+  pub fn add_client(&mut self, client : Client) {
+    for i in range(0, self.clients.len) {
+      if self.clients.get(i).id = i {
+        println!("OThread: found same client id({}) in clients vec", i);
+        break;
+      }
+    }
+    self.clients.push(client);
+  }
+
+  pub fn dispatch_ack(&mut self, ack : Ack) {
   }
 }
 
