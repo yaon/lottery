@@ -8,9 +8,9 @@ use std::str::CharSplits;
 use utils::{SOCKET_PATH, Command, Ack, Add, Get, Error, Value};
 use utils::{TransactionMeta};
 
-struct Client {
+pub struct Client {
   client:       UnixStream,
-  id:           u32,
+  id:           uint,
   nbr_request:  int,
 }
 
@@ -42,8 +42,8 @@ impl IThread {
     }
   }
 
-  fn parse_cmd(&self, client_id: u32, cmd : String) -> Option<Command> {
-    static mut i:u32 = 0;
+  fn parse_cmd(&self, client_id: uint, cmd : String) -> Option<Command> {
+    static mut i:uint = 0;
     unsafe{ i += 1 };
     let mut sliced = cmd.as_slice().split(' ');
     let trans = unsafe{i};
@@ -68,8 +68,7 @@ impl IThread {
     }
   }
 
-  pub fn new(send: Sender<Command>, recv: Receiver<Ack>) -> IThread {
-    let (client_send, _) : (Sender<Client>, Receiver<Client>) = channel(); // FIXME
+  pub fn new(send: Sender<Command>, client_send: Sender<Client>) -> IThread {
     let mut ithread = IThread {
       cmd_chan: send,
       client_chan: client_send,
@@ -88,7 +87,7 @@ impl IThread {
 
 
     for client in stream.listen().incoming() {
-      static mut i :u32 = 0;
+      static mut i :uint = 0;
       unsafe { i += 1 };
       let client_id = unsafe{i};
       let mut stream = BufferedStream::new(client.clone());
@@ -96,8 +95,8 @@ impl IThread {
       loop {
         match stream.read_line() {
           Ok(cmd) => match self.parse_cmd(client_id, cmd) {
-            None => {println!("IOThread: command error. Ignoring")}
-            Some(cmd) => {debug!("IOThread: parsed command = [{}]", cmd);
+            None => {println!("IThread: command error. Ignoring")}
+            Some(cmd) => {debug!("IThread: parsed command = [{}]", cmd);
                           nbr_request += 1;
                           self.cmd_chan.send(cmd);}
           },
@@ -148,7 +147,7 @@ impl OThread {
         is_client = (s.wait() == handle1.id())
       }
 
-      if (is_client) {
+      if is_client {
         let cli = self.client_chan.recv();
         self.add_client(cli)
       } else {
@@ -158,47 +157,51 @@ impl OThread {
     }
   }
 
-  pub fn add_client(&mut self, client : Client) {
-    self.clients.push(client)
+  pub fn add_client(&self, client : Client) {
+    match self.clients.iter().find({|e| e.id == client.id}) {
+      Some(c) => println!("OThread: found same client id({}) in clients vec", c.id),
+      None => self.clients.push(client)
+    }
   }
 
-  fn find_client<'a>(&'a self, id: u32) -> &'a mut Client {
-    //let ref mut yolo = self.clients;
-    //let ref mut clt : Client = *yolo.get_mut(0);
-    //for i in range(0, self.clients.len()) {
-    //  if self.clients.get(i).id == id {
-    //    clt = yolo.get_mut(i);
-    //    break;
-    //  }
-    //}
-    //clt
-    //let ref mut c = *self.clients.iter().find({|e| e.id == id}).unwrap();
+  fn find_client<'a>(&'a self, id: uint) -> &'a Client {
+    match self.clients.iter().find({|e| e.id == id}) {
+      None => fail!("Unknown client !"),
+      Some(c) => c
+    }
   }
 
   pub fn dispatch_ack(&mut self, ack : Ack) {
     let mut idx = 0;
     let meta = ack.meta();
     let mut client = self.find_client(meta.id_client);
-    self.send_ack(ack, client);
+    self.send_ack(ack, *client);
     self.acks.push(box ack);
   }
 
-  fn send_ack(&self, ack: Ack, clt: &mut Client) {
-
+  pub fn send_ack(&mut self, ack: Ack, mut clt: Client) {
+    match ack {
+      Error(m, s) => {
+        clt.client.write_str((format!("Error: {}\n{}",
+                                      s, self.dump_meta(m))).as_slice())
+      }
+      Value(m, k, v) => {
+        clt.client.write_str((format!("Success: {} => {}\n{}",
+                                      k, v, self.dump_meta(m)).as_slice()))
+      }
+    };
   }
 
-  fn dump_vec(&self) -> () {
-    for i in range(0, self.clients.len()) {
-      println!("vec[{}]", i);
-      println!("number of requests: {}", self.clients.get(i).nbr_request);
-      //for j in range(0, self.vec_clients.get(i).vec_ack.len()) {
-      //  let ack = self.vec_clients.get(i).vec_ack.get(j);
-      //  match ack {
-      //    Error(e) => println!("Error : {}", e),
-      //    Value(l,r) => println!("Success: {} {}", l, r),
-      //  }
-      //}
-    }
+  fn dump_meta(&self, meta: TransactionMeta) -> String {
+    return (format!("id_client : {}\n
+            id_transaction: {}\n
+            open_time: {}\n
+            close_time: {}\n
+            start_query_time: {}\n
+            end_query_time: {}",
+            meta.id_client, meta.id_transaction,
+            meta.open_time, meta.close_time,
+            meta.start_op_time, meta.end_op_time)).as_slice().to_string()
   }
 }
 

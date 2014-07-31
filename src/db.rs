@@ -1,23 +1,17 @@
 use std::collections::btree::BTree;
 use utils::{ Ack, Command, Error, Value, Add, Get, TransactionMeta };
 
-pub struct Loto {
+pub struct DB {
   loto : Option<BTree<String, String>>,
 }
 
-impl Loto {
-  pub fn new(tree: Option<BTree<String, String>>) -> Loto {
-    Loto { loto: tree }
+impl DB {
+  pub fn new(tree: Option<BTree<String, String>>) -> DB {
+    DB { loto: tree }
   }
 
-  pub fn command(&mut self, cmd: Command) -> Ack {
-    return match cmd {
-      Add(m, k, v) => self.add(m, k, v),
-      Get(m, k) => self.search(m, k),
-    }
-  }
 
-  fn search(&mut self, mut meta: TransactionMeta, key: String) -> Ack {
+  pub fn search(&self, mut meta: TransactionMeta, key: String) -> Ack {
     meta.update_start_op_time();
     return match self.loto {
       Some(ref tree) => {
@@ -33,7 +27,7 @@ impl Loto {
     }
   }
 
-  fn add(&mut self, mut meta: TransactionMeta, key: String, value: String) -> Ack {
+  pub fn add(&mut self, mut meta: TransactionMeta, key: String, value: String) -> Ack {
     meta.update_start_op_time();
     let new_tree =
       match self.loto {
