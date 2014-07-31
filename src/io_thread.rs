@@ -27,6 +27,13 @@ pub struct OThread {
   acks:         Vec<Box<Ack>>,
 }
 
+impl Clone for Client {
+  fn clone(&self) -> Client {
+    Client {id: self.id, nbr_request: self.nbr_request,
+            client: self.client.clone()}
+  }
+}
+
 impl IThread {
   fn unlink(&self) -> () {
     if self.socket.exists() {
@@ -157,25 +164,26 @@ impl OThread {
     }
   }
 
-  pub fn add_client(&self, client : Client) {
+  pub fn add_client(&mut self, client : Client) {
     match self.clients.iter().find({|e| e.id == client.id}) {
-      Some(c) => println!("OThread: found same client id({}) in clients vec", c.id),
-      None => self.clients.push(client)
-    }
+      Some(c) => {println!("OThread: found same client id({}) in clients vec", c.id); return}
+      None => ()
+    };
+    self.clients.push(client)
   }
 
-  fn find_client<'a>(&'a self, id: uint) -> &'a Client {
-    match self.clients.iter().find({|e| e.id == id}) {
+  fn find_client<'a>(&'a mut self, id: uint) -> &'a mut Client {
+    match self.clients.mut_iter().find({|e| e.id == id}) {
       None => fail!("Unknown client !"),
       Some(c) => c
     }
   }
 
   pub fn dispatch_ack(&mut self, ack : Ack) {
-    let mut idx = 0;
     let meta = ack.meta();
+    let mut idx = 0;
     let mut client = self.find_client(meta.id_client);
-    self.send_ack(ack, *client);
+    self.send_ack(ack, client.clone());
     self.acks.push(box ack);
   }
 
