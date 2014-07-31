@@ -2,7 +2,7 @@
 #[phase(plugin, link)] extern crate log;
 use std::os;
 use utils::{ Command, Ack};
-use io_thread::{IThread, OThread, Client};
+use io_thread::{IThread, OThread, IOCmd};
 use worker::Worker;
 use std::sync::{ Mutex, Arc, RWLock };
 use db::DB;
@@ -27,7 +27,7 @@ fn main() {
 
   let (tpp_tx, tio_rx): (Sender<Ack>, Receiver<Ack>) = channel();
   let (tio_tx, tpp_rx): (Sender<Command>, Receiver<Command>) = channel();
-  let (client_send, client_recv): (Sender<Client>, Receiver<Client>) = channel();
+  let (client_send, client_recv): (Sender<IOCmd>, Receiver<IOCmd>) = channel();
 
   let tpp_rx_mutex = Arc::new(Mutex::new(tpp_rx));
 

@@ -22,9 +22,9 @@ impl Worker {
     loop {
       let cmd = {
         let mut rx = self.rx_mutex.lock();
-        debug!("Worker{}: Got mutex", self.id);
+        // debug!("Worker{}: Got mutex", self.id);
         let cmd = rx.recv();
-        debug!("Worker{}: Received {}", self.id, cmd);
+        // debug!("Worker{}: Received {}", self.id, cmd);
         cmd
       };
       let ack = match cmd {
@@ -38,7 +38,7 @@ impl Worker {
         }
       };
 
-      debug!("Worker {}: Ack: {}", self.id, ack);
+      // debug!("Worker {}: Ack: {}", self.id, ack);
       self.tx.send(ack);
     }
   }
