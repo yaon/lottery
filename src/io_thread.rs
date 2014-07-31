@@ -162,24 +162,23 @@ impl OThread {
     self.clients.push(client)
   }
 
-  fn find_client(&mut self, id: u32) -> Client {
-    let ref mut yolo = self.clients;
-    let mut clt : Client = *yolo.get_mut(0);
-    for i in range(0, self.clients.len()) {
-      if self.clients.get(i).id == id {
-        clt = *yolo.get_mut(i);
-        break;
-      }
-    }
-    clt
+  fn find_client<'a>(&'a self, id: u32) -> &'a mut Client {
+    //let ref mut yolo = self.clients;
+    //let ref mut clt : Client = *yolo.get_mut(0);
+    //for i in range(0, self.clients.len()) {
+    //  if self.clients.get(i).id == id {
+    //    clt = yolo.get_mut(i);
+    //    break;
+    //  }
+    //}
+    //clt
     //let ref mut c = *self.clients.iter().find({|e| e.id == id}).unwrap();
-     //*c
   }
 
   pub fn dispatch_ack(&mut self, ack : Ack) {
     let mut idx = 0;
     let meta = ack.meta();
-    let ref mut client = self.find_client(meta.id_client);
+    let mut client = self.find_client(meta.id_client);
     self.send_ack(ack, client);
     self.acks.push(box ack);
   }
