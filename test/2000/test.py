@@ -2,10 +2,10 @@
 
 import sys
 import time
-from subprocess import Popen
+import subprocess
 
 start = time.time()
-r = Popen(["./test/2000/search_bg.sh"])
+subprocess.call(["./test/2000/search_bg.sh"])
 elapsed = time.time() - start
 
 print('Search time (4x50 elements) in ' + str(elapsed) + 's')
