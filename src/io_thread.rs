@@ -34,6 +34,31 @@ impl Clone for Client {
   }
 }
 
+  pub fn send_ack(ack: Ack, mut clt: Client) {
+    match ack {
+      Error(m, s) => {
+        clt.client.write_str((format!("Error: {}\n{}",
+                                      s, dump_meta(m))).as_slice())
+      }
+      Value(m, k, v) => {
+        clt.client.write_str((format!("Success: {} => {}\n{}",
+                                      k, v, dump_meta(m)).as_slice()))
+      }
+    };
+  }
+
+  pub fn dump_meta(meta: TransactionMeta) -> String {
+    return (format!("id_client : {}\n
+            id_transaction: {}\n
+            open_time: {}\n
+            close_time: {}\n
+            start_query_time: {}\n
+            end_query_time: {}",
+            meta.id_client, meta.id_transaction,
+            meta.open_time, meta.close_time,
+            meta.start_op_time, meta.end_op_time)).as_slice().to_string()
+  }
+
 impl IThread {
   fn unlink(&self) -> () {
     if self.socket.exists() {
@@ -182,34 +207,12 @@ impl OThread {
   pub fn dispatch_ack(&mut self, ack : Ack) {
     let meta = ack.meta();
     let mut idx = 0;
-    let mut client = self.find_client(meta.id_client);
-    self.send_ack(ack, client.clone());
+    {
+      let mut client = self.find_client(meta.id_client);
+      send_ack(ack, client.clone());
+    }
     self.acks.push(box ack);
   }
 
-  pub fn send_ack(&mut self, ack: Ack, mut clt: Client) {
-    match ack {
-      Error(m, s) => {
-        clt.client.write_str((format!("Error: {}\n{}",
-                                      s, self.dump_meta(m))).as_slice())
-      }
-      Value(m, k, v) => {
-        clt.client.write_str((format!("Success: {} => {}\n{}",
-                                      k, v, self.dump_meta(m)).as_slice()))
-      }
-    };
-  }
-
-  fn dump_meta(&self, meta: TransactionMeta) -> String {
-    return (format!("id_client : {}\n
-            id_transaction: {}\n
-            open_time: {}\n
-            close_time: {}\n
-            start_query_time: {}\n
-            end_query_time: {}",
-            meta.id_client, meta.id_transaction,
-            meta.open_time, meta.close_time,
-            meta.start_op_time, meta.end_op_time)).as_slice().to_string()
-  }
 }
 
