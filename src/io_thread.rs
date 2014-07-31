@@ -11,17 +11,25 @@ use utils::{TransactionMeta};
 pub struct Client {
   client:       UnixStream,
   id:           uint,
-  nbr_request:  int,
+  nb_req:       uint,
+  nb_ack:       uint,
+  wait_end:     bool,
+}
+
+enum IOCmd {
+  New(uint, UnixStream), // id client, socket
+  Cmd(uint),             // id_client
+  End(uint)              // id_client
 }
 
 pub struct IThread {
-  cmd_chan:     Sender<Command>,
+  cmd_chan:     Sender<IOCmd>,
   client_chan:  Sender<Client>,
   socket:       Path,
 }
 
 pub struct OThread {
-  client_chan:  Receiver<Client>,
+  client_chan:  Receiver<IOCmd>,
   ack_chan:     Receiver<Ack>,
   clients:      Vec<Client>,
   acks:         Vec<Box<Ack>>,
@@ -108,7 +116,7 @@ impl IThread {
     }
   }
 
-  pub fn new(send: Sender<Command>, client_send: Sender<Client>) -> IThread {
+  pub fn new(send: Sender<Command>, client_send: Sender<IOCmd>) -> IThread {
     let ithread = IThread {
       cmd_chan: send,
       client_chan: client_send,
@@ -131,27 +139,32 @@ impl IThread {
       unsafe { i += 1 };
       let client_id = unsafe{i};
       let mut stream = BufferedStream::new(client.clone());
-      let mut nbr_request = 0;
-      loop {
-        match stream.read_line() {
-          Ok(cmd) => match self.parse_cmd(client_id, cmd) {
-            None => {println!("IThread: command error. Ignoring")}
-            Some(cmd) => {debug!("IThread: parsed command = [{}]", cmd);
-                          nbr_request += 1;
-                          self.cmd_chan.send(cmd);}
-          },
-          // le compilo dit que y'a que EndOfFile donc pas d'erreurs
-          Err(_) => break
-        }
-        let c = Client {
-          client: client.clone().unwrap(),
-          id:     client_id,
-          nbr_request: nbr_request
-        };
-        debug!("$$ Sending client !")
-        self.client_chan.send(c);
+
+      {
+        debug!("$$ Sending NEW client {}", client_id);
+        self.client_chan.send(New(client_id, stream.clone()))
       }
+
+      let mut nbr_request = 0;
+      match stream.read_line() {
+        Ok(cmd) => match self.parse_cmd(client_id, cmd) {
+          None => {println!("IThread: command error. Ignoring")}
+          Some(cmd) => {debug!("IThread: parsed command = [{}]", cmd);
+            nbr_request += 1;
+            self.cmd_chan.send(cmd);}
+        },
+        // le compilo dit que y'a que EndOfFile donc pas d'erreurs
+        Err(_) => break
+      }
+      debug!("$$ Sending CMD to client {}", client_id);
+      self.client_chan.send(Cmd(client_id))
     }
+
+    {
+      debug!("$$ Sending END client {}", client_id);
+      self.client_chan.send(End(client_id))
+    }
+
   }
 
   fn exit(&self) -> () {
@@ -161,7 +174,7 @@ impl IThread {
 
 impl OThread {
 
-  pub fn new(client:Receiver<Client>, ack:Receiver<Ack>) -> OThread {
+  pub fn new(client:Receiver<IOCmd>, ack:Receiver<Ack>) -> OThread {
     OThread {
       client_chan:  client,
       ack_chan:     ack,
@@ -182,16 +195,16 @@ impl OThread {
         let mut handle1 = s.handle(client);
         let mut handle2 = s.handle(ack);
         unsafe {
-          handle1.add();
           handle2.add();
+          handle1.add();
         }
         is_client = s.wait() == handle1.id()
       }
 
       if is_client {
         let cli = self.client_chan.recv();
-        debug!("** Received client ! (id: {}, nr:{})", cli.id, cli.nbr_request);
-        self.add_client(cli)
+        debug!("** RECEIVED CLIENT !");
+        self.handle_client(cli)
       } else {
         let ack = self.ack_chan.recv();
         debug!("** Received ack ! {}", ack);
@@ -200,12 +213,36 @@ impl OThread {
     }
   }
 
-  pub fn add_client(&mut self, client : Client) {
-    match self.clients.mut_iter().find({|e| e.id == client.id}) {
-      Some(c) => {c.nbr_request += 1; return}
-      None => ()
-    };
-    self.clients.push(client)
+  fn handle_client(&self, cmd: IOCmd) {
+    match cmd {
+      New(cli_id, stream) => self.add_client(cli_id, stream),
+      Cmd(cli_id) => self.incr_client_cmd(cli_id),
+      End(cli_id) => self.try_drop_client(cli_id, true)
+    }
+  }
+
+  fn incr_client_cmd(&self, id:uint) {
+    let (idx, client) = self.find_client(id);
+    client.nb_req += 1
+  }
+
+  fn try_drop_client(&self, id: uint, get_end_cmd: bool) {
+    let (idx, client) = self.find_client(id);
+    if get_end_cmd {
+      client.wait_end = true;
+    }
+
+    if (!client.wait_end) {return}
+
+    if (client.nb_req == client.nb_ack) {
+      drop(client)
+    }
+  }
+
+  pub fn add_client(&mut self, client: uint, stream: UnixStream) {
+    let mut cli = Client {id: client, client: stream,
+                          nb_req: 0, nb_ack: 0, wait_end: false};
+    self.clients.push(cli)
   }
 
   fn find_client<'a>(&'a mut self, id: uint) -> (uint, &'a mut Client) {
