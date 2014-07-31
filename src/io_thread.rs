@@ -209,9 +209,9 @@ impl OThread {
     let mut idx = 0;
     {
       let mut client = self.find_client(meta.id_client);
-      send_ack(ack, client.clone());
+      send_ack(ack.clone(), client.clone());
     }
-    self.acks.push(box ack);
+    self.acks.push(box ack.clone());
   }
 
 }

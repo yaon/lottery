@@ -1,7 +1,7 @@
 extern crate time;
 use self::time::{Timespec, get_time};
 
-#[deriving(Show)]
+#[deriving(Show, Clone)]
 pub struct TransactionMeta {
   pub id_client:        uint,
   pub id_transaction:   uint,
@@ -11,13 +11,13 @@ pub struct TransactionMeta {
   pub end_op_time:      Option<Timespec>
 }
 
-#[deriving(Show)]
+#[deriving(Show, Clone)]
 pub enum Command {
   Add(TransactionMeta, String, String),
   Get(TransactionMeta, String)
 }
 
-#[deriving(Show)]
+#[deriving(Show, Clone)]
 pub enum Ack {
   Error(TransactionMeta, String),
   Value(TransactionMeta, String, String)
