@@ -6,7 +6,7 @@ all:
 
 test:
 	./main &
-	./test/2000/add.sh
 	./test/2000/test.py
+	killall main
 
 .PHONY: test
