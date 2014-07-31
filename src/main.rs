@@ -31,12 +31,13 @@ fn main() {
 
   let tpp_rx_mutex = Arc::new(Mutex::new(tpp_rx));
 
-  debug!("Spawning IO thread");
+  debug!("Spawning IThread");
   spawn(proc() {
     let mut ti: IThread = IThread::new(tio_tx, client_send);
     ti.start();
   });
 
+  debug!("Spawning OThread");
   spawn(proc() {
     let mut to: OThread = OThread::new(client_recv, tio_rx);
     to.start();
@@ -49,7 +50,7 @@ fn main() {
     let tpp_rx_mutex_clone = tpp_rx_mutex.clone();
     let tpp_tx_clone = tpp_tx.clone();
 
-    debug!("Spawning worker thread");
+    debug!("Spawning worker thread {}", i);
     spawn(proc() {
       let worker: Worker =
         Worker::new(i, tpp_tx_clone, tpp_rx_mutex_clone, db_lock_clone);
