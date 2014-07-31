@@ -66,16 +66,11 @@ impl Clone for Client {
   pub fn dump_meta(meta: TransactionMeta) -> String {
     return (format!("id_client : {}
             id_transaction: {}
-            open_time: {}
-            close_time: {}
-            start_query_time: {}
-            end_query_time: {}\n",
+            time to handle query: {}sec {}ms\n",
             meta.id_client, meta.id_transaction,
-            meta.open_time,
-            // test
-            get_time().sec,
-            meta.start_op_time.unwrap().sec,
-            meta.end_op_time.unwrap().sec)).as_slice().to_string()
+            meta.end_op_time.unwrap().sec - meta.start_op_time.unwrap().sec,
+            (meta.end_op_time.unwrap().nsec - meta.start_op_time.unwrap().nsec) / 1000
+            ))
   }
 
 impl IThread {
@@ -107,7 +102,6 @@ impl IThread {
         // ugly fix, i don't know how it's working but hey
         let mut sl = sliced;
         let mut sl2 = String::from_str(sl.next().unwrap());
-        debug!("CMD {}: ADD", trans);
         Some(Add(meta, sl2, self.sanitize_str(sl)))
       },
       Some("get") | Some("GET") => {
@@ -206,7 +200,11 @@ impl OThread {
 
       if is_client {
         let cli = self.client_chan.recv();
-        debug!("** RECEIVED CLIENT !");
+        match cli {
+            New(id, _) => info!("*** NEW CLIENT: {}", id),
+            Cmd(id)    => debug!("* CMD CLIENT {}", id),
+            End(id)    => info!("*** TERMINATING CLIENT {}", id)
+        };
         self.handle_client(cli)
       } else {
         let ack = self.ack_chan.recv();
@@ -252,12 +250,7 @@ impl OThread {
 
   fn find_client<'a>(&'a mut self, id: uint) -> (uint, &'a mut Client) {
     let idx = match self.clients.mut_iter().position({|e| e.id == id}) {
-      None => {
-        debug!("Client {} not found, waiting the client...", id);
-        ::std::io::timer::sleep(50);
-        let (idx, _) = self.find_client(id);
-        idx
-      }
+      None => fail!("Client not found !"),
       Some(c) => c
     };
 
@@ -274,10 +267,7 @@ impl OThread {
       (idx, client.clone())
     };
     self.acks.push(box ack.clone());
-
-    debug!("Before Try-Drop");
     self.try_drop_client(idx, false);
-    debug!("End Dispatching ACK");
   }
 }
 

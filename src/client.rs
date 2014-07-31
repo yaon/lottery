@@ -32,8 +32,5 @@ fn main() {
   }
 
   stream.close_write();
-
   println!("{}", stream.read_to_str().unwrap());
-
-
 }
