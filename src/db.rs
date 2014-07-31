@@ -1,5 +1,5 @@
 use std::collections::btree::BTree;
-use utils::{ Ack, Command, Error, Value, Add, Get, TransactionMeta };
+use utils::{ Ack, Error, Value, TransactionMeta };
 
 pub struct DB {
   loto : Option<BTree<String, String>>,

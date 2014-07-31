@@ -33,7 +33,7 @@ impl Worker {
           db.add(m, k, v)
         },
         Get(m, k) => {
-          let mut db = self.db_lock.read();
+          let db = self.db_lock.read();
           db.search(m, k)
         }
       };

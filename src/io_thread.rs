@@ -135,7 +135,7 @@ impl IThread {
           // le compilo dit que y'a que EndOfFile donc pas d'erreurs
           Err(_) => break
         }
-        let mut c = Client {
+        let c = Client {
           client: client.clone().unwrap(),
           id:     client_id,
           nbr_request: nbr_request
@@ -206,9 +206,8 @@ impl OThread {
 
   pub fn dispatch_ack(&mut self, ack : Ack) {
     let meta = ack.meta();
-    let idx = 0;
     {
-      let mut client = self.find_client(meta.id_client);
+      let client = self.find_client(meta.id_client);
       send_ack(ack.clone(), client.clone());
     }
     self.acks.push(box ack.clone());
