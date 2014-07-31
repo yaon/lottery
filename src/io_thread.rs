@@ -27,6 +27,12 @@ pub struct OThread {
   acks:         Vec<Box<Ack>>,
 }
 
+impl Drop for Client {
+  fn drop(&mut self) {
+    drop(self.client);
+  }
+}
+
 impl Clone for Client {
   fn clone(&self) -> Client {
     Client {id: self.id, nbr_request: self.nbr_request,
@@ -213,6 +219,12 @@ impl OThread {
       send_ack(ack.clone(), client.clone());
     }
     self.acks.push(box ack.clone());
+    {
+      let mut client = self.find_client(meta.id_client);
+      client.nbr_request -= 1;
+      if client.nbr_request == 0 {
+      }
+    }
   }
 
 }
