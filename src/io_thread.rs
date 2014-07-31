@@ -38,13 +38,15 @@ impl Clone for Client {
     match ack {
       Error(m, s) => {
         clt.client.write_str((format!("Error: {}\n{}",
-                                      s, dump_meta(m))).as_slice())
+                                      s, dump_meta(m))).as_slice());
+        ()
       }
       Value(m, k, v) => {
         clt.client.write_str((format!("Success: {} => {}\n{}",
-                                      k, v, dump_meta(m)).as_slice()))
+                                      k, v, dump_meta(m)).as_slice()));
+        ()
       }
-    };
+    }
   }
 
   pub fn dump_meta(meta: TransactionMeta) -> String {
