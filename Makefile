@@ -7,8 +7,8 @@ all:
 test:
 	killall main
 	./main &
-	./add.sh
-	./test.py
+	./test/2000/add.sh
+	./test/2000/test.py
 
 
 
