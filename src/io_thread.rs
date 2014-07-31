@@ -166,7 +166,7 @@ impl OThread {
   pub fn start(&mut self) {
     loop {
       use std::comm::Select;
-      let mut is_client = false;
+      let mut is_client;
 
       {
         let ref client  = self.client_chan;
