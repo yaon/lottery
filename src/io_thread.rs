@@ -93,7 +93,11 @@ impl IThread {
         None
       },
       Some("add") | Some("ADD") => {
-        Some(Add(meta, self.sanitize_str(sliced), self.sanitize_str(sliced)))
+        // ugly fix, i don't know how it's working but hey
+        let mut sl = sliced;
+        let mut sl2 = String::from_str(sl.next().unwrap());
+        debug!("CMD {}: ADD", trans);
+        Some(Add(meta, sl2, self.sanitize_str(sl)))
       },
       Some("get") | Some("GET") => {
         Some(Get(meta, self.sanitize_str(sliced)))
@@ -235,6 +239,5 @@ impl OThread {
     }
     self.acks.push(box ack.clone());
   }
-
 }
 
