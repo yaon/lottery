@@ -5,11 +5,8 @@ all:
 	rustc src/client.rs $(RFLAGS)
 
 test:
-	killall main
 	./main &
 	./test/2000/add.sh
 	./test/2000/test.py
-
-
 
 .PHONY: test
