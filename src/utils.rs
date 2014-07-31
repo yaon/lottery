@@ -44,6 +44,15 @@ impl Ack {
   }
 }
 
+//impl Clone for Ack {
+//  fn clone(&self) -> Ack {
+//    match *self {
+//      Error(meta, err) => Error(meta, err),
+//      Value(meta, arg1, arg2) => Value(meta, arg1, arg2)
+//    }
+//  }
+//}
+
 impl TransactionMeta {
   pub fn new(client: u32, trans:u32, open: Timespec) -> TransactionMeta {
     TransactionMeta {

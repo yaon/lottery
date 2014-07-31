@@ -24,7 +24,7 @@ pub struct OThread {
   client_chan:  Receiver<Client>,
   ack_chan:     Receiver<Ack>,
   clients:      Vec<Client>,
-  acks:         Vec<Ack>,
+  acks:         Vec<Box<Ack>>,
 }
 
 impl IThread {
@@ -162,34 +162,29 @@ impl OThread {
     self.clients.push(client)
   }
 
-  pub fn dispatch_ack(&mut self, ack : Ack) {
-
-    let mut idx = 0;
-    let meta = ack.meta();
-    let mut _client = self.clients.iter().find({|e| e.id == meta.id_client});
-
-    match _client {
-      None => {debug!("OThread: Unknown client id: {}",meta.id_client)},
-      Some(client) => {
-        self.send_ack(ack, *client);
-        //client.nbr_request -= 1;
-
-        //if (client.nbr_request == 0) {
-        //  self.clients.swap_remove(idx);
-        //  drop(client);
-        //  let mut ack = ack;
-        //  ack.update_close_time();
-        //}
-
-        self.acks.push(ack);
-
-
+  fn find_client(&mut self, id: u32) -> Client {
+    let ref mut yolo = self.clients;
+    let mut clt : Client = *yolo.get_mut(0);
+    for i in range(0, self.clients.len()) {
+      if self.clients.get(i).id == id {
+        clt = *yolo.get_mut(i);
+        break;
       }
     }
-
+    clt
+    //let ref mut c = *self.clients.iter().find({|e| e.id == id}).unwrap();
+     //*c
   }
 
-  fn send_ack(&mut self, ack: Ack, mut clt: Client) {
+  pub fn dispatch_ack(&mut self, ack : Ack) {
+    let mut idx = 0;
+    let meta = ack.meta();
+    let ref mut client = self.find_client(meta.id_client);
+    self.send_ack(ack, client);
+    self.acks.push(box ack);
+  }
+
+  fn send_ack(&self, ack: Ack, clt: &mut Client) {
 
   }
 
