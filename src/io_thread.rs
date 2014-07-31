@@ -29,7 +29,7 @@ pub struct OThread {
 
 impl Drop for Client {
   fn drop(&mut self) {
-    drop(self.client);
+    drop(&self.client);
   }
 }
 
@@ -90,19 +90,15 @@ impl IThread {
     let meta = TransactionMeta::new(client_id, trans, get_time());
     match sliced.next() {
       None => {
-        debug!("CMD {}: NONE", trans);
         None
       },
       Some("add") | Some("ADD") => {
-        debug!("CMD {}: ADD", trans);
         Some(Add(meta, self.sanitize_str(sliced), self.sanitize_str(sliced)))
       },
       Some("get") | Some("GET") => {
-        debug!("CMD {}: GET", trans);
         Some(Get(meta, self.sanitize_str(sliced)))
       },
       err => {
-        debug!("CMD {}: OTHER={}", trans, err);
         None
       }
     }
@@ -122,7 +118,7 @@ impl IThread {
 
     let stream = match UnixListener::bind(&self.socket) {
       Err(why)   => fail!("failed to bind socket: {}", why),
-      Ok(stream) => {println!("Socket bound"); stream},
+      Ok(stream) => {println!("IThread: Socket bound"); stream},
     };
 
 
@@ -148,6 +144,7 @@ impl IThread {
           id:     client_id,
           nbr_request: nbr_request
         };
+        debug!("$$ Sending client !")
         self.client_chan.send(c);
       }
     }
@@ -189,42 +186,54 @@ impl OThread {
 
       if is_client {
         let cli = self.client_chan.recv();
+        debug!("** Received client ! (id: {}, nr:{})", cli.id, cli.nbr_request);
         self.add_client(cli)
       } else {
         let ack = self.ack_chan.recv();
+        debug!("** Received ack ! {}", ack);
         self.dispatch_ack(ack)
       }
     }
   }
 
   pub fn add_client(&mut self, client : Client) {
-    match self.clients.iter().find({|e| e.id == client.id}) {
-      Some(c) => {println!("OThread: found same client id({}) in clients vec", c.id); return}
+    match self.clients.mut_iter().find({|e| e.id == client.id}) {
+      Some(c) => {c.nbr_request += 1; return}
       None => ()
     };
     self.clients.push(client)
   }
 
-  fn find_client<'a>(&'a mut self, id: uint) -> &'a mut Client {
-    match self.clients.mut_iter().find({|e| e.id == id}) {
-      None => fail!("Unknown client !"),
+  fn find_client<'a>(&'a mut self, id: uint) -> (uint, &'a mut Client) {
+    let idx = match self.clients.mut_iter().position({|e| e.id == id}) {
+      None => {
+        debug!("Client {} not found, waiting the client...", id);
+        ::std::io::timer::sleep(50);
+        let (idx, _) = self.find_client(id);
+        idx
+      }
       Some(c) => c
-    }
+    };
+
+    (idx, self.clients.get_mut(idx))
   }
 
   pub fn dispatch_ack(&mut self, ack : Ack) {
     let meta = ack.meta();
-    {
-      let client = self.find_client(meta.id_client);
+    let (idx, client) = {
+      let (idx, client) : (uint, &mut Client) = self.find_client(meta.id_client);
+      client.nbr_request -= 1;
       send_ack(ack.clone(), client.clone());
+      (idx, client.clone())
+    };
+    {
+      println!("Client[{}] {} to ACK", client.id, client.nbr_request);
+      //if (client.nbr_request == 0) {
+          //self.clients.swap_remove(idx);
+          //drop(client)
+     // }
     }
     self.acks.push(box ack.clone());
-    {
-      let mut client = self.find_client(meta.id_client);
-      client.nbr_request -= 1;
-      if client.nbr_request == 0 {
-      }
-    }
   }
 
 }
