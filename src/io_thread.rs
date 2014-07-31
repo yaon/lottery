@@ -101,7 +101,7 @@ impl IThread {
   }
 
   pub fn new(send: Sender<Command>, client_send: Sender<Client>) -> IThread {
-    let mut ithread = IThread {
+    let ithread = IThread {
       cmd_chan: send,
       client_chan: client_send,
       socket: Path::new(SOCKET_PATH),
@@ -206,7 +206,7 @@ impl OThread {
 
   pub fn dispatch_ack(&mut self, ack : Ack) {
     let meta = ack.meta();
-    let mut idx = 0;
+    let idx = 0;
     {
       let mut client = self.find_client(meta.id_client);
       send_ack(ack.clone(), client.clone());
