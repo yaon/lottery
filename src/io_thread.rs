@@ -56,7 +56,7 @@ impl Clone for Client {
         ()
       }
       Value(m, k, v) => {
-        clt.client.write_str((format!("Success: {} => {}\n{}",
+        clt.client.write_str((format!("Success: {} => {}\n{}\n",
                                       k, v, dump_meta(m)).as_slice()));
         ()
       }
@@ -64,15 +64,18 @@ impl Clone for Client {
   }
 
   pub fn dump_meta(meta: TransactionMeta) -> String {
-    return (format!("id_client : {}\n
-            id_transaction: {}\n
-            open_time: {}\n
-            close_time: {}\n
-            start_query_time: {}\n
-            end_query_time: {}",
+    return (format!("id_client : {}
+            id_transaction: {}
+            open_time: {}
+            close_time: {}
+            start_query_time: {}
+            end_query_time: {}\n",
             meta.id_client, meta.id_transaction,
-            meta.open_time, meta.close_time,
-            meta.start_op_time, meta.end_op_time)).as_slice().to_string()
+            meta.open_time,
+            // test
+            get_time().sec,
+            meta.start_op_time.unwrap().sec,
+            meta.end_op_time.unwrap().sec)).as_slice().to_string()
   }
 
 impl IThread {
