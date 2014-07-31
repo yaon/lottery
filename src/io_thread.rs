@@ -93,11 +93,11 @@ impl IThread {
         debug!("CMD {}: NONE", trans);
         None
       },
-      Some("add") => {
+      Some("add") | Some("ADD") => {
         debug!("CMD {}: ADD", trans);
         Some(Add(meta, self.sanitize_str(sliced), self.sanitize_str(sliced)))
       },
-      Some("get") => {
+      Some("get") | Some("GET") => {
         debug!("CMD {}: GET", trans);
         Some(Get(meta, self.sanitize_str(sliced)))
       },
