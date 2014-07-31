@@ -1,0 +1,2 @@
+main: src/main.rs src/utils.rs src/io_thread.rs src/pp_thread.rs
+

@@ -51,7 +51,7 @@ fn main() {
 
     debug!("Spawning worker thread");
     spawn(proc() {
-      let mut worker: Worker =
+      let worker: Worker =
         Worker::new(i, tpp_tx_clone, tpp_rx_mutex_clone, db_lock_clone);
       worker.start();
     });
