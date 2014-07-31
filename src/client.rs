@@ -30,4 +30,8 @@ fn main() {
       Ok(_) => {},
     }
   }
+
+  println!("{}", stream.read_to_str().unwrap());
+
+
 }
