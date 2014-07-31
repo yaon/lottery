@@ -27,12 +27,6 @@ pub struct OThread {
   acks:         Vec<Box<Ack>>,
 }
 
-impl Drop for Client {
-  fn drop(&mut self) {
-    drop(self.client);
-  }
-}
-
 impl Clone for Client {
   fn clone(&self) -> Client {
     Client {id: self.id, nbr_request: self.nbr_request,
@@ -94,8 +88,11 @@ impl IThread {
         None
       },
       Some("add") | Some("ADD") => {
+        // ugly fix, i don't know how it's working but hey
+        let mut sl = sliced;
+        let mut sl2 = String::from_str(sl.next().unwrap());
         debug!("CMD {}: ADD", trans);
-        Some(Add(meta, self.sanitize_str(sliced), self.sanitize_str(sliced)))
+        Some(Add(meta, sl2, self.sanitize_str(sl)))
       },
       Some("get") | Some("GET") => {
         debug!("CMD {}: GET", trans);
@@ -219,13 +216,6 @@ impl OThread {
       send_ack(ack.clone(), client.clone());
     }
     self.acks.push(box ack.clone());
-    {
-      let mut client = self.find_client(meta.id_client);
-      client.nbr_request -= 1;
-      if client.nbr_request == 0 {
-      }
-    }
   }
-
 }
 
